@@ -10,3 +10,4 @@ workbench.xmi
 .gitignore
 *.csv
 data
+/bin
