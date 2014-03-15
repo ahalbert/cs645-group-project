@@ -4,3 +4,8 @@
 *.jar
 *.war
 *.ear
+
+workbench.xmi
+.classpath
+*.csv
+data
