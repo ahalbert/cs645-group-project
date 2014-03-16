@@ -132,12 +132,69 @@ public class LuceneIndexer {
 		try{
 			Directory directory = FSDirectory.open(new File(commentsIndexPath));
 			SearcherManager manager = new SearcherManager(directory, new SearcherFactory());
+			Analyzer analyzer = new WhitespaceAnalyzer(Version.LUCENE_47);
+			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_47, analyzer);
+			config.setRAMBufferSizeMB(500);
+			config.setUseCompoundFile(false);
+			
+			IndexWriter indexWriter = new IndexWriter(FSDirectory.open(new File(indexDir)),config); 
 			
 			IndexSearcher s = manager.acquire(); 
+			int counter=0; 
 			try
 			{
 				//builds the index with person_responder,comment_responded,comment_published,person_publisher
-				
+				BufferedReader br = new BufferedReader(new FileReader(commentsReplyFilePath));
+				String line = ""; 
+				QueryParser parser = new QueryParser(Version.LUCENE_47, "comment",
+						new WhitespaceAnalyzer(Version.LUCENE_47));			
+				line = br.readLine(); 
+				while((line=br.readLine())!=null)
+				{
+					if(++counter%1000==0)
+					{
+						System.out.println(counter);
+					}
+					StringTokenizer st = new StringTokenizer(line,"|");
+					String comment1 = st.nextToken(); 
+					String comment2 = st.nextToken();
+					
+					Query query = parser.parse("comment:" + comment1);
+					
+					TopDocs topDocs = s.search(query, 1);
+
+					ScoreDoc[] hits = topDocs.scoreDocs;
+					String person1=""; 
+					for (int i = 0; i < hits.length; i++) {
+
+						int docId = hits[i].doc;
+						Document d = s.doc(docId);
+						person1 = d.get("person");
+
+					}
+					
+					
+					query = parser.parse("comment:" + comment2);
+					topDocs = s.search(query, 1);
+
+					hits = topDocs.scoreDocs;
+					String person2=""; 
+					for (int i = 0; i < hits.length; i++) {
+
+						int docId = hits[i].doc;
+						Document d = s.doc(docId);
+						person2 = d.get("person");
+
+					}
+					Document doc = new Document(); 
+					doc.add(new StringField("person_responder", person1, Field.Store.YES));
+					doc.add(new StringField("comment_responded", comment1, Field.Store.YES));
+					doc.add(new StringField("comment_published", comment2, Field.Store.YES));
+					doc.add(new StringField("person_publisher", person2, Field.Store.YES));
+					indexWriter.addDocument(doc);
+					
+				}	
+				indexWriter.close();
 			}
 			finally
 			{
@@ -155,7 +212,7 @@ public class LuceneIndexer {
 			Directory directory = FSDirectory.open(indexDir);
 			IndexSearcher searcher = new IndexSearcher(
 					DirectoryReader.open(directory));
-			QueryParser parser = new QueryParser(Version.LUCENE_47, "contents",
+			QueryParser parser = new QueryParser(Version.LUCENE_47, "comment",
 					new StandardAnalyzer(Version.LUCENE_47)/*
 															 * new
 															 * SimpleAnalyzer()

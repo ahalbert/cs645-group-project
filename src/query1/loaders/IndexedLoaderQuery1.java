@@ -21,8 +21,8 @@ public class IndexedLoaderQuery1 {
 	//by default index does not exist 
 	public static boolean indexCommentHasCreatorPerson = false;  
 	
-	public static String indexCommentsPath = ""; 
-	public static String indexPersonCreatorCommentsPath = ""; 
+	public static String indexCommentsPath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_comments"; 
+	public static String indexPersonCreatorCommentsPath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_person_creator"; 
 	
 	public HashMap<Integer,ArrayList<Integer>> loadData(Integer from, Integer to, Integer numberOfComments, String dataPath)
 	{
@@ -249,31 +249,31 @@ public class IndexedLoaderQuery1 {
 			//counter that counts the number of comments replied 
 			
 			int counter = 0; 
-						
-			while ((line = br.readLine()) != null)  
-			{
-				StringTokenizer st = new StringTokenizer(line,"|");
-				Integer replyId = Integer.valueOf(st.nextToken());
-				Integer commentId = Integer.valueOf(st.nextToken());
-				
-				Integer commentFrom = commentToPerson.get(replyId); 
-				Integer commentTo = commentToPerson.get(commentId); 
-				Comment comment = new Comment(); 
-				comment.setUserIdFrom(commentFrom);
-				comment.setUserIdTo(commentTo);
-				
-				
-				Integer number = commentsConnectedPersons.get(comment);
-				if(number==null)
-				{
-					number=1; 
-				}
-				else
-				{
-					number++; 
-				}
-				commentsConnectedPersons.put(comment, number);
-			}
+			luceneIndexer.indexQuery1(indexCommentsPath, dataPath + "/comment_replyOf_comment.csv");
+//			while ((line = br.readLine()) != null)  
+//			{
+//				StringTokenizer st = new StringTokenizer(line,"|");
+//				Integer replyId = Integer.valueOf(st.nextToken());
+//				Integer commentId = Integer.valueOf(st.nextToken());
+//				
+//				Integer commentFrom = commentToPerson.get(replyId); 
+//				Integer commentTo = commentToPerson.get(commentId); 
+//				Comment comment = new Comment(); 
+//				comment.setUserIdFrom(commentFrom);
+//				comment.setUserIdTo(commentTo);
+//				
+//				
+//				Integer number = commentsConnectedPersons.get(comment);
+//				if(number==null)
+//				{
+//					number=1; 
+//				}
+//				else
+//				{
+//					number++; 
+//				}
+//				commentsConnectedPersons.put(comment, number);
+//			}
 			
 			
 		}
@@ -298,7 +298,8 @@ public class IndexedLoaderQuery1 {
 	public static void main(String [] args)
 	{
 		IndexedLoaderQuery1 loadQuery1 = new IndexedLoaderQuery1();
-		HashMap<Integer,ArrayList<Integer>> testResult = loadQuery1.loadData(58,402,0,"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/data_files");
+		//HashMap<Integer,ArrayList<Integer>> testResult = loadQuery1.loadData(58,402,0,"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/data_files");
+		loadQuery1.doIndexPreload("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/big_data_files");
 		
 		System.out.println("The end");
 	}
