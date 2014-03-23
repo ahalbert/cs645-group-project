@@ -221,6 +221,9 @@ public class IndexedLoaderQuery1 {
 			
 			LuceneIndexer luceneIndexer = new LuceneIndexer(); 
 			luceneIndexer.indexFile(dataPath+"/comment_hasCreator_person.csv", indexPersonCreatorCommentsPath, "|", new String[]{"comment","person"});
+			
+			
+			
 //			br = new BufferedReader(new FileReader(dataPath + "/comment_hasCreator_person.csv"));  
 //			String line = null;  
 //			br.readLine();
@@ -249,7 +252,7 @@ public class IndexedLoaderQuery1 {
 			//counter that counts the number of comments replied 
 			
 			int counter = 0; 
-			luceneIndexer.indexQuery1(indexCommentsPath, dataPath + "/comment_replyOf_comment.csv");
+			luceneIndexer.indexQuery1(indexPersonCreatorCommentsPath, indexCommentsPath, dataPath + "/comment_replyOf_comment.csv");
 //			while ((line = br.readLine()) != null)  
 //			{
 //				StringTokenizer st = new StringTokenizer(line,"|");

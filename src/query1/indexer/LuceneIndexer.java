@@ -49,8 +49,8 @@ public class LuceneIndexer {
 			StringTokenizer st = null;
 			int tknNumber=0;
 //			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_47);
-//			SimpleAnalyzer analyzer = new SimpleAnalyzer(Version.LUCENE_47);
-			Analyzer analyzer = new WhitespaceAnalyzer(Version.LUCENE_47);
+			SimpleAnalyzer analyzer = new SimpleAnalyzer(Version.LUCENE_47);
+//			Analyzer analyzer = new WhitespaceAnalyzer(Version.LUCENE_47);
 			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_47, analyzer);
 			config.setRAMBufferSizeMB(500);
 			config.setUseCompoundFile(false);
@@ -59,21 +59,22 @@ public class LuceneIndexer {
 
 			while((line=br.readLine())!=null)
 			{
-				Document doc = new Document(); 
+//				Document doc = new Document(); 
 				st = new StringTokenizer(line,separator);
 				tknNumber=0; 
-				if(++counter%10000==0)
+//				System.out.println(line);
+				if(++counter%100000==0)
 				{
 					System.out.println(counter);
 				}
 				while(st.hasMoreTokens())
 				{
-					doc.add(new StringField(fields[tknNumber], st.nextToken(), Field.Store.YES));
+//					doc.add(new StringField(fields[tknNumber], st.nextToken(), Field.Store.YES));
+					st.nextToken();
 					tknNumber++; 
 				}
-				indexWriter.addDocument(doc);
+//				indexWriter.addDocument(doc);
 			}
-//			indexWriter.
 			indexWriter.close();
 			
 		}
@@ -128,16 +129,16 @@ public class LuceneIndexer {
 		}
 	}	
 	
-	public void indexQuery1(String commentsIndexPath, String commentsReplyFilePath){
+	public void indexQuery1(String replyIndexPath,String commentsIndexPath, String commentsReplyFilePath){
 		try{
-			Directory directory = FSDirectory.open(new File(commentsIndexPath));
+			Directory directory = FSDirectory.open(new File(replyIndexPath));
 			SearcherManager manager = new SearcherManager(directory, new SearcherFactory());
 			Analyzer analyzer = new WhitespaceAnalyzer(Version.LUCENE_47);
 			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_47, analyzer);
 			config.setRAMBufferSizeMB(500);
 			config.setUseCompoundFile(false);
 			
-			IndexWriter indexWriter = new IndexWriter(FSDirectory.open(new File(indexDir)),config); 
+			IndexWriter indexWriter = new IndexWriter(FSDirectory.open(new File(commentsIndexPath)),config); 
 			
 			IndexSearcher s = manager.acquire(); 
 			int counter=0; 
@@ -203,7 +204,7 @@ public class LuceneIndexer {
 		}
 		catch(Exception ex)
 		{
-			
+			ex.printStackTrace();
 		}
 	}
 	
