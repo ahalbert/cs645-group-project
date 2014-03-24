@@ -279,7 +279,7 @@ public class LoaderQuery1 {
 	public static void main(String [] args)
 	{
 		LoaderQuery1 loadQuery1 = new LoaderQuery1();
-		HashMap<Integer,ArrayList<Integer>> testResult = loadQuery1.loadData(58,402,0,"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/data_files");
+		HashMap<Integer,ArrayList<Integer>> testResult = loadQuery1.loadData(58,402,0,"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/big_data_files");
 		
 		System.out.println("The end");
 	}

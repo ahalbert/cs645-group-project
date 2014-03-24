@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 import query1.dtos.Path;
+import query1.indexer.LuceneIndexer;
+import query1.loaders.IndexedLoaderQuery1;
 import query1.loaders.LoaderQuery1;
 
 import java.util.Queue;
@@ -54,6 +56,79 @@ public class ExecuterQuery1 {
 				for(Integer neighbour:neighbours)
 				{
 					Path neighbourDistance = distance.get(neighbour); 
+					if(neighbourDistance==null)
+					{
+						distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
+						queue.add(neighbour);
+					}
+					else
+					{
+						//System.out.println("distance not null");
+					}
+				}
+				
+				previousElement=currentElement;
+			}
+
+		}
+		Path parent = null;
+		if(!currentElement.equals(userTo))
+		{
+			System.out.println("Path not found");
+		}
+		else
+		{
+			System.out.println(currentElement);
+			while((parent=distance.get(currentElement)).getParent()!=null)
+			{
+				currentElement=parent.getParent(); 
+				System.out.println(currentElement);
+			}
+		}
+		System.out.println("The end 2a");
+		
+	}
+	
+
+	//first version: breadth first search
+	public void findPathWithIndex(Integer userFrom, Integer userTo, Integer comments)
+	{
+		IndexedLoaderQuery1 loaderQuery1 = new IndexedLoaderQuery1(); 
+		LuceneIndexer luceneIndexer = new LuceneIndexer(); 
+		loaderQuery1.doIndexPreload("/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
+				+ "Design and Implementation/project topics/social_networks/big_data_files");
+		
+		
+//		ArrayList<Integer> neighbours = data.get(userFrom);
+		LinkedList<Integer> queue = new LinkedList<Integer>(); 
+		queue.add(userFrom);
+		
+		HashMap<Integer,Path> distance = new HashMap<Integer,Path>();
+		Path path = new Path(0,null);
+		distance.put(userFrom, path);
+		Integer currentElement=null;
+		Integer previousElement=null;
+		Integer previousDist=0;
+		while(queue.size()>0 && !(currentElement=queue.poll()).equals(userTo))
+		{
+//			if(currentElement==402)
+//			{
+//				System.out.println("current element is 402");
+//			}
+			Path currentPath = distance.get(currentElement);
+//			if(dist==null)
+//			{
+//				System.out.println("Error!!! distance should not be null!!!");
+//			}
+			ArrayList<Integer> neighbours = luceneIndexer.getUsersConnected(currentElement, IndexedLoaderQuery1.indexPersonKnowsPerson);
+			
+			if(neighbours!=null)
+			{
+				
+				for(Integer neighbour:neighbours)
+				{
+					Path neighbourDistance = distance.get(neighbour);
+					Boolean isEnoughComments = luceneIndexer.isEnoughComments(currentElement, neighbour, comments, IndexedLoaderQuery1.indexCommentsPath);
 					if(neighbourDistance==null)
 					{
 						distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
