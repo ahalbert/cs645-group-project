@@ -41,6 +41,20 @@ public class LuceneIndexer {
 	public static String indexDir2 = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/comment_creator";
 	public static String indexDirV2 = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_files_v2";
 	
+	
+	static Directory directoryPerson = null;
+	
+	static SearcherManager managerPerson = null;
+	
+	static IndexSearcher sPerson;
+	
+	static Directory directoryComments = null;
+	
+	static SearcherManager managerComments = null;
+	
+	static IndexSearcher sComments = null;
+	
+
 	public void indexFile(String filePath, String indexDir, String separator, String [] fields, boolean override) 
 	{
 		try
@@ -77,7 +91,6 @@ public class LuceneIndexer {
 				while(st.hasMoreTokens())
 				{
 					doc.add(new StringField(fields[tknNumber], st.nextToken(), Field.Store.YES));
-					st.nextToken();
 					tknNumber++; 
 				}
 				indexWriter.addDocument(doc);
@@ -308,43 +321,46 @@ public class LuceneIndexer {
 		ArrayList<Integer> retValue = new ArrayList<Integer>(); 
 		try
 		{
-			Directory directory = FSDirectory.open(new File(indexPath));
-			
-			SearcherManager manager = new SearcherManager(directory, new SearcherFactory());
-			
-			IndexSearcher s = manager.acquire();
+			if (sPerson==null)
+			{
+				directoryPerson = FSDirectory.open(new File(indexPath));
+				
+				managerPerson = new SearcherManager(directoryPerson, new SearcherFactory());
+				
+				sPerson = managerPerson.acquire();
+			}
 			try
 			{
 				Analyzer analyzer = new WhitespaceAnalyzer(Version.LUCENE_47); 
 				QueryParser parser = new QueryParser(Version.LUCENE_47,"person_from", analyzer);
-				String query = "person_from: " + userId;
+				String query = "person_from:" + userId;
 				
 				Query qQuery = parser.parse(query);
 
 				
-				TopDocs topDocs = s.search(qQuery,9999999);
+				TopDocs topDocs = sPerson.search(qQuery,9999999);
 
 				ScoreDoc[] hits = topDocs.scoreDocs;
 				
 				for(ScoreDoc sd:hits)
 				{
 //					retValue.add(sd.doc); 
-					Document d = s.doc(sd.doc);
+					Document d = sPerson.doc(sd.doc);
 					retValue.add(Integer.valueOf(d.get("person_to")));					
 				}
 			}
 			catch(Exception ex)
 			{
-				
+				ex.printStackTrace();
 			}
 			finally
 			{
-				manager.close();
+				managerPerson.close();
 			}
 		}
 		catch(Exception ex)
 		{
-			
+			ex.printStackTrace();
 		}
 		return retValue; 
 	}
@@ -352,41 +368,54 @@ public class LuceneIndexer {
 	{
 		try
 		{
-			Directory directory = FSDirectory.open(new File(indexPath));
+			if(sComments==null)
+			{
+				directoryComments = FSDirectory.open(new File(indexPath));
 			
-			SearcherManager manager = new SearcherManager(directory, new SearcherFactory());
+				managerComments = new SearcherManager(directoryComments, new SearcherFactory());
 			
-			IndexSearcher s = manager.acquire();
-			
+				sComments = managerComments.acquire();
+			}
 			try
 			{
 				Analyzer analyzer = new WhitespaceAnalyzer(Version.LUCENE_47); 
 				QueryParser parser = new MultiFieldQueryParser(Version.LUCENE_47, new String[] {"person_responder", "comment_responded", "comment_published", "person_publisher"}, analyzer);
-				String query = "person_responder:" + userFrom + " AND person_publisher: " + userTo;
+				String query = "person_responder:" + userFrom + " AND person_publisher:" + userTo;
 				
 				Query qQuery = parser.parse(query);
 
 				
-				TopDocs topDocs = s.search(qQuery, Comments+1);
+				TopDocs topDocs = sComments.search(qQuery, Comments+1);
 
 				ScoreDoc[] hits = topDocs.scoreDocs;
 				if(hits.length>Comments)
 				{
-					return false; 
+					query = "person_responder:" + userTo + " AND person_publisher:" + userFrom;
+					
+					qQuery = parser.parse(query);
+
+					
+					topDocs = sComments.search(qQuery, Comments+1);
+					
+					hits = topDocs.scoreDocs; 
+					if(hits.length>Comments)
+					{
+						return true; 						
+					}
 				}
 			}
 			catch(Exception ex)
 			{
-				
+				ex.printStackTrace();
 			}
 			finally
 			{
-				manager.close();
+				managerComments.close();
 			}
 		}
 		catch(Exception ex)
 		{
-			
+			ex.printStackTrace();
 		}
 		return false; 
 	}
@@ -490,13 +519,6 @@ public class LuceneIndexer {
 	public static void main (String [] args)
 	{
 		LuceneIndexer luceneIndexer = new LuceneIndexer(); 
-//		luceneIndexer.indexFileV2("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project"
-//				+ " topics/social_networks/big_data_files/comment_replyOf_comment.csv",
-//					"|", new String[]{"comment_from","comment_to"});
-		
-//		luceneIndexer.indexFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project"
-//				+ " topics/social_networks/big_data_files/comment_replyOf_comment.csv",indexDir,
-//					"|", new String[]{"comment_from","comment_to"});
 		luceneIndexer.indexFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project"
 				+ " topics/social_networks/big_data_files/comment_hasCreator_person.csv", indexDir2,
 					"|", new String[]{"comment","person"},true);

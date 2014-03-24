@@ -128,14 +128,24 @@ public class IndexedLoaderQuery1 {
 	}
 	public void doIndexPreload(String dataPath)
 	{
+		
 		BufferedReader br = null; 
 		try{
 			//step 1 start
 			
 			LuceneIndexer luceneIndexer = new LuceneIndexer(); 
-//			luceneIndexer.indexFile(dataPath+"/comment_hasCreator_person.csv", indexPersonCreatorCommentsPath, "|", new String[]{"comment","person"});
+//			luceneIndexer.indexFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project"
+//					+ " topics/social_networks/big_data_files/person_knows_person.csv", indexPersonKnowsPerson,
+//						"|", new String[]{"person_from","person_to"},false);
 			
-			
+			luceneIndexer.indexFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project"
+					+ " topics/social_networks/big_data_files/person_knows_person.csv", indexPersonKnowsPerson,
+						"|", new String[]{"person_from","person_to"},false);
+
+			if(luceneIndexer.isIndexCreated(this.indexCommentsPath))
+			{
+				return ; 
+			}
 			br = new BufferedReader(new FileReader(dataPath + "/comment_hasCreator_person.csv"));  
 			String line = null;  
 			br.readLine();

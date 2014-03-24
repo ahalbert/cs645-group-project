@@ -129,7 +129,7 @@ public class ExecuterQuery1 {
 				{
 					Path neighbourDistance = distance.get(neighbour);
 					Boolean isEnoughComments = luceneIndexer.isEnoughComments(currentElement, neighbour, comments, IndexedLoaderQuery1.indexCommentsPath);
-					if(neighbourDistance==null)
+					if(neighbourDistance==null&&isEnoughComments)
 					{
 						distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
 						queue.add(neighbour);
@@ -166,7 +166,9 @@ public class ExecuterQuery1 {
 	{
 		
 		ExecuterQuery1 executerQuery1 = new ExecuterQuery1(); 
-		executerQuery1.findPath(58,402,4);
+//		executerQuery1.findPath(58,402,2);
+		executerQuery1.findPath(858,587,1);
+		executerQuery1.findPathWithIndex(858, 587,1);
 		System.out.println("The end 2");
 	}
 }
