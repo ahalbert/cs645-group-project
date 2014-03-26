@@ -10,3 +10,6 @@ workbench.xmi
 .gitignore
 *.csv
 data
+Test.java
+org.eclim.prefs
+outputDir-1k/*
