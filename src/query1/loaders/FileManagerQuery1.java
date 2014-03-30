@@ -1,5 +1,6 @@
 package query1.loaders;
 
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -13,6 +14,8 @@ import com.foundations.comparator.structure.RowComparator;
 import com.foundations.comparator.structure.XMLStructureReader;
 import com.google.code.externalsorting.ExternalSort;
 
+import org.mapdb.*;
+
 /**
  * 
  * @author klimzaporojets
@@ -20,7 +23,7 @@ import com.google.code.externalsorting.ExternalSort;
  */
 public class FileManagerQuery1 {
 	
-	private static final int DEFAULTMAXTEMPFILES = 10240;
+	private static final int DEFAULTMAXTEMPFILES = 100;
 //	private static final File XML_FILE = new File("layout.xml");
 //	private static final File INPUT_FILE = new File("Canada.csv");
 //	private static final File OUTPUT_FILE = new File("Canada.sort.csv");
@@ -40,7 +43,16 @@ public class FileManagerQuery1 {
 		
 		ExternalSort.mergeSortedFiles(fileList, OUTPUT_FILE, comparator, Charset.defaultCharset(), false);
 	}
-
+	
+	//sorting using MapDB library
+	public void MapDBsort(String filePath, String fileName, String xmlPath, String xmlFile, String sortedPath, String sortedFile) throws IOException, ParserConfigurationException, SAXException {
+//		Pump.sort(source, mergeDuplicates, batchSize, comparator, serializer)
+//		
+//		Pump.
+//		
+//		Serializer ser = null; 
+	}
+	
 	public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
 		FileManagerQuery1 app = new FileManagerQuery1();
 		Long start = System.currentTimeMillis();
