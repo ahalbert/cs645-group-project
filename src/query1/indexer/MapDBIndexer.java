@@ -34,7 +34,11 @@ public class MapDBIndexer {
 	//step 2: index iterate over person_to_person
 	public void Index()
 	{
+		//step 1: sort the file person_knows_person by person1
 		
+		//step 2: preload max of comment_response_of_comment from a particular person
+		
+		//step 3: 
 	}
 	
 	public static void retrieveDataPump(String [] args)
@@ -53,13 +57,143 @@ public class MapDBIndexer {
 		
 	}
 	
-	public static void testDataPump(String[] args) throws IOException {
-		Iterator<Fun.Tuple2<Long,Long>> entriesSource; //= new ArrayList<Fun.Tuple2<Long,Long>>();
-		// String
-		// filePath="/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-		// +
-		// "and Implementation/project topics/social_networks/big_data_files/";
-		// String fileName="comment_hasCreator_person_no_header.csv";
+	
+	public static void indexCommentReplyOfComment(String[] args) throws IOException {
+		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+				+ "and Implementation/project topics/social_networks/big_data_files/";
+		String fileName = "comment_replyOf_comment_no_header.csv";
+
+		FileReader fileReader = new FileReader(new File(filePath + fileName));
+
+		LineNumberReader lnr = new LineNumberReader(fileReader);
+
+		lnr.skip(Long.MAX_VALUE);
+		final Integer max = lnr.getLineNumber();
+		// Finally, the LineNumberReader object should be closed to prevent
+		// resource leak
+		lnr.close();
+		final FileReader fileReader2 = new FileReader(new File(filePath
+				+ fileName));
+		final BufferedReader br = new BufferedReader(fileReader2);
+
+		/** max number of elements to import */
+		// final long max = (int) 1e7;
+
+		/**
+		 * Open database in temporary directory
+		 */
+		File dbFile = new File(
+				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+						+ "and Implementation/project topics/social_networks/sorted_files/mapdb_comm_rof_comm.index");
+		DB db = DBMaker.newFileDB(dbFile)
+		/** disabling Write Ahead Log makes import much faster */
+		.transactionDisable().make();
+
+		// db.get(name)
+
+		long time = System.currentTimeMillis();
+
+		/**
+		 * Source of data which randomly generates strings. In real world this
+		 * would return data from file.
+		 */
+		Iterator<Fun.Tuple2<Integer,Integer>> source = new Iterator<Fun.Tuple2<Integer,Integer>>(){
+			long counter = 0;
+			@Override
+			public boolean hasNext() {
+				// TODO Auto-generated method stub
+				return counter < max;
+			}
+
+			@Override
+			public Tuple2<Integer, Integer> next() {
+				counter++;
+				Integer commentId1=0; 
+				Integer commentId2=0; 
+				try {
+					String line = br.readLine();
+					StringTokenizer st = new StringTokenizer(line, "|");
+					commentId1 = Integer.valueOf(st.nextToken());
+					commentId2 = Integer.valueOf(st.nextToken());
+
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				Fun.Tuple2<Integer, Integer> valueToReturn = new Fun.Tuple2<Integer, Integer>(commentId1, commentId2);
+				return valueToReturn;
+				// return randomString(10);				
+			}
+
+			@Override
+			public void remove() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		};
+
+
+		/**
+		 * BTreeMap Data Pump requires data source to be presorted in reverse
+		 * order (highest to lowest). There is method in Data Pump we can use to
+		 * sort data. It uses temporarly files and can handle fairly large data
+		 * sets.
+		 */
+		source = Pump.sort(source, true, 100000,
+				Collections.reverseOrder(BTreeMap.COMPARABLE_COMPARATOR), // reverse
+																			// order
+																			// comparator
+				db.getDefaultSerializer());
+
+		// BTreeMap.COMPARABLE_COMPARATOR;
+		/**
+		 * Disk space used by serialized keys should be minimised. Keys are
+		 * sorted, so only difference between consequential keys is stored. This
+		 * method is called delta-packing and typically saves 60% of disk space.
+		 */
+		// BTreeKeySerializer<String> keySerializer = BTreeKeySerializer.TUPLE2
+		// ;
+
+		int counter = 0; 
+
+		System.out.println ("counter: " + counter);
+		
+		
+		BTreeKeySerializer keySerializer = BTreeKeySerializer.BASIC ; //BTreeKeySerializer.STRING;
+
+		/**
+		 * Translates Map Key into Map Value.
+		 */
+//		Fun.Function1<Integer, String> valueExtractor = new Fun.Function1<Integer, String>() {
+//			@Override
+//			public Integer run(String s) {
+//				// return s.hashCode();
+//				return Integer.valueOf(s);
+//			}
+//		};
+
+
+		System.out.println("Sorting time: "
+				+ (System.currentTimeMillis() - time) / 1000); 
+		/**
+		 * Create BTreeMap and fill it with data
+		 */
+		Map<String, Integer> map = db.createTreeMap("map")
+				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.INTEGER)
+				.pumpIgnoreDuplicates()
+				.make();
+//				.pumpSource(source, valueExtractor)
+				// .pumpPresort(100000) // for presorting data we could also use
+				// this method
+				//.keySerializer(keySerializer).make();
+
+		System.out.println("Finished; total time to index comment_replyof_comment: "
+				+ (System.currentTimeMillis() - time) / 1000 + "s; there are "
+				+ map.size() + " items in map");
+		db.close();		
+	}
+	public static void indexCommentHasCreatorPerson(String[] args) throws IOException {
+
 
 		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
 				+ "and Implementation/project topics/social_networks/sorted_files/";
@@ -133,36 +267,7 @@ public class MapDBIndexer {
 			}
 			
 		};
-//		Iterator<String> source = new Iterator<String>() {
-//
-//			long counter = 0;
-//
-//			@Override
-//			public boolean hasNext() {
-//				return counter < max;
-//			}
-//
-//			@Override
-//			public String next() {
-//				counter++;
-//				String valueToReturn = "";
-//				try {
-//					String line = br.readLine();
-//					StringTokenizer st = new StringTokenizer(line, "|");
-//					st.nextToken();
-//					valueToReturn = st.nextToken();
-//
-//				} catch (Exception ex) {
-//					ex.printStackTrace();
-//				}
-//				return valueToReturn;
-//				// return randomString(10);
-//			}
-//
-//			@Override
-//			public void remove() {
-//			}
-//		};
+
 
 		/**
 		 * BTreeMap Data Pump requires data source to be presorted in reverse
@@ -186,36 +291,23 @@ public class MapDBIndexer {
 		// ;
 
 		int counter = 0; 
-//		while(source.hasNext())
-//		{
-//			Tuple2<Integer,Integer> t2 = source.next();
-//			System.out.println(t2.a + "-" + t2.b);
-//			++counter; 
-//		}
+
 		System.out.println ("counter: " + counter);
 		
 		
 		BTreeKeySerializer keySerializer = BTreeKeySerializer.BASIC ; //BTreeKeySerializer.STRING;
-		BTreeKeySerializer valueSerializer = BTreeKeySerializer.STRING; //BTreeKeySerializer.STRING;
 
 		/**
 		 * Translates Map Key into Map Value.
 		 */
-		Fun.Function1<Integer, String> valueExtractor = new Fun.Function1<Integer, String>() {
-			@Override
-			public Integer run(String s) {
-				// return s.hashCode();
-				return Integer.valueOf(s);
-			}
-		};
-//		Fun.Tuple2<Integer, String> tuple2 = new Fun.Tuple2<Integer, String>() {
+//		Fun.Function1<Integer, String> valueExtractor = new Fun.Function1<Integer, String>() {
 //			@Override
 //			public Integer run(String s) {
 //				// return s.hashCode();
 //				return Integer.valueOf(s);
 //			}
 //		};
-		// new Fun.Tuple2<>()
+
 
 		System.out.println("Sorting time: "
 				+ (System.currentTimeMillis() - time) / 1000); 
@@ -225,7 +317,7 @@ public class MapDBIndexer {
 		Map<String, Integer> map = db.createTreeMap("map")
 				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.STRING)
 				.pumpIgnoreDuplicates()
-				.make();
+				.makeAdapt2();
 //				.pumpSource(source, valueExtractor)
 				// .pumpPresort(100000) // for presorting data we could also use
 				// this method
@@ -298,9 +390,10 @@ public class MapDBIndexer {
 	//just a test 
 	public static void main (String [] args) throws IOException
 	{
-		retrieveDataPump(args); 
+//		retrieveDataPump(args); 
 //		testDataPump(args); 
-//		testMultiMap(args); 
+//		testMultiMap(args);
+		indexCommentReplyOfComment(args); 
 		
 	}
     public static String randomString(int size) {
