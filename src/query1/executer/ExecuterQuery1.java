@@ -177,7 +177,7 @@ public class ExecuterQuery1 {
 		while(queue.size()>0 && !(currentElement=queue.poll()).equals(userTo))
 		{
 			Path currentPath = distance.get(currentElement);
-			ArrayList<Integer> neighbours = luceneIndexer.getUsersConnected(currentElement, IndexedLoaderQuery1.indexPersonKnowsPerson);
+			ArrayList<Integer> neighbours = mapDbIndexer.getUsersConnected(currentElement);
 			
 			if(neighbours!=null)
 			{
@@ -185,9 +185,11 @@ public class ExecuterQuery1 {
 				for(Integer neighbour:neighbours)
 				{
 					Path neighbourDistance = distance.get(neighbour);
-					Boolean isEnoughComments = luceneIndexer.isEnoughComments(currentElement, neighbour, comments, IndexedLoaderQuery1.indexCommentsPath);
-					if(neighbourDistance==null&&isEnoughComments)
+//					Boolean isEnoughComments = luceneIndexer.isEnoughComments(currentElement, neighbour, comments, IndexedLoaderQuery1.indexCommentsPath);
+					if(neighbourDistance==null/*&&isEnoughComments*/)
 					{
+						mapDbIndexer.isEnoughComments(currentElement, neighbour, comments, IndexedLoaderQuery1.indexCommentsPath);
+						
 						distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
 						queue.add(neighbour);
 					}

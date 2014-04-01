@@ -44,6 +44,7 @@ public class MapDBIndexer {
 	
 	static BTreeMap<Integer,String> treeMapCommentsForPerson = null; 
 	static BTreeMap<Integer,Integer> treeMapCommentsResponseOfComments = null; 
+	static BTreeMap<Integer,String> treeMapPersonKnowsPerson = null; 
 	//step 1: index comment_to_person to access by comment and get the respective person_id
 	//step 2: index iterate over person_to_person
 	public static void Index() throws IOException
@@ -105,6 +106,12 @@ public class MapDBIndexer {
 				+ (System.currentTimeMillis() - time) / 1000 + " sec"); 
 		buildIndexFinalFile(fileOutputPath);
 	}
+	
+	public void getUsersConnected(Integer currentElement, Integer comments)
+	{
+		
+	}
+	
 	static void buildIndexFinalFile(String pathFile) throws IOException
 	{
 
@@ -367,6 +374,23 @@ public class MapDBIndexer {
 		return valOftreeMap; 
 	}
 	
+	public String getPersonKnowsPerson(Integer personId)
+	{
+		if(treeMapPersonKnowsPerson==null)
+		{
+			File dbFile = new File(
+				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+						+ "and Implementation/project topics/social_networks/sorted_files/mapdb_person_knows_person.index");
+			DB db = DBMaker.newFileDB(dbFile)
+					/** disabling Write Ahead Log makes import much faster */
+					.transactionDisable().make();
+		
+			treeMapCommentsForPerson = db.getTreeMap("map");
+		}
+		String valOftreeMap = treeMapCommentsForPerson.get(personId);
+		return valOftreeMap; 
+		
+	}
 	//gets the comment replied by a particular comment
 	public static Integer getCommentReplied(Integer commentId)
 	{
@@ -384,7 +408,136 @@ public class MapDBIndexer {
 		Integer valOftreeMap = treeMapCommentsResponseOfComments.get(commentId);
 		return valOftreeMap; 
 	}
-	
+	public ArrayList<Integer> getUsersConnected()
+	{
+		String persons = getPersonKnowsPerson(personId);
+		HashSet<String> commentsRepplied = new HashSet<String>(); 
+		if(persons==null)
+		{
+			return commentsRepplied;
+		}
+		StringTokenizer st = new StringTokenizer(persons, ",");
+		while(st.hasMoreTokens())
+		{
+			commentsRepplied.add(String.valueOf(getCommentReplied(Integer.valueOf(st.nextToken()))));
+		}
+		return commentsRepplied; 
+		
+	}
+	public static void indexPersonKnowsPerson(String[] args) throws IOException {
+		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+				+ "and Implementation/project topics/social_networks/big_data_files/";
+		String fileName = "person_knows_person.csv"; //"comment_replyOf_comment_no_header.csv";
+
+		FileReader fileReader = new FileReader(new File(filePath + fileName));
+
+		LineNumberReader lnr = new LineNumberReader(fileReader);
+
+		lnr.skip(Long.MAX_VALUE);
+		final Integer max = lnr.getLineNumber();
+		// Finally, the LineNumberReader object should be closed to prevent
+		// resource leak
+		lnr.close();
+		final FileReader fileReader2 = new FileReader(new File(filePath
+				+ fileName));
+		final BufferedReader br = new BufferedReader(fileReader2);
+
+		
+		
+		/**
+		 * Open database in temporary directory
+		 */
+		File dbFile = new File(
+				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+						+ "and Implementation/project topics/social_networks/sorted_files/mapdb_person_knows_person.index");
+		DB db = DBMaker.newFileDB(dbFile)
+		/** disabling Write Ahead Log makes import much faster */
+		.transactionDisable().make();
+
+		// db.get(name)
+
+		long time = System.currentTimeMillis();
+
+		/**
+		 * Source of data which randomly generates strings. In real world this
+		 * would return data from file.
+		 */
+		Iterator<Fun.Tuple2<Integer,String>> source = new Iterator<Fun.Tuple2<Integer,String>>(){
+			long counter = 0;
+			@Override
+			public boolean hasNext() {
+				// TODO Auto-generated method stub
+				return counter < max-1;
+			}
+
+			@Override
+			public Tuple2<Integer, String> next() {
+				counter++;
+				Integer personId1=0; 
+				String personId2=""; 
+				try {
+					//ignores the header 
+					if(counter==1)
+					{
+						br.readLine(); 
+					}
+					String line = br.readLine();
+					StringTokenizer st = new StringTokenizer(line, "|");
+					personId1 = Integer.valueOf(st.nextToken());
+					personId2 = st.nextToken();
+
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				Fun.Tuple2<Integer, String> valueToReturn = new Fun.Tuple2<Integer, String>(personId1, personId2);
+				return valueToReturn;
+				// return randomString(10);				
+			}
+
+			@Override
+			public void remove() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		};
+
+		source = Pump.sort(source, true, 100000,
+				Collections.reverseOrder(BTreeMap.COMPARABLE_COMPARATOR), // reverse
+																			// order
+																			// comparator
+				db.getDefaultSerializer());
+
+		int counter = 0; 
+
+		System.out.println ("counter: " + counter);
+		
+		
+		BTreeKeySerializer keySerializer = BTreeKeySerializer.BASIC ; //BTreeKeySerializer.STRING;
+
+
+
+		System.out.println("Sorting time: "
+				+ (System.currentTimeMillis() - time) / 1000); 
+		/**
+		 * Create BTreeMap and fill it with data
+		 * 
+		 * TODO: for reverse order, override the compareTo method of Integer to behave the other way around
+		 */
+//		Map<String, Integer> map = db.createTreeMap("map")
+//				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.INTEGER)
+//				.make();
+		
+		Map<String, Integer> map = db.createTreeMap("map")
+				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.STRING)
+				.pumpIgnoreDuplicates()
+				.makeAdapt2();
+		
+		System.out.println("Finished; total time to index person_knows_person: "
+				+ (System.currentTimeMillis() - time) / 1000 + "s; there are "
+				+ map.size() + " items in map");
+		db.close();	
+	}	
 	
 	public static void indexCommentReplyOfComment(String[] args) throws IOException {
 		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
@@ -596,64 +749,66 @@ public class MapDBIndexer {
 				+ map.size() + " items in map");
 		db.close();
 	}
-	//TODO: compare the insertions in documentation 
-	public static void testMultiMap(String [] args) throws IOException
-	{
-		File dbFile = new File(
-				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-						+ "and Implementation/project topics/social_networks/sorted_files/multimapdb.index");
-		
-        DB db = //DBMaker.newMemoryDB().make();
-        		DBMaker.newFileDB(dbFile).make();
-//        DBMaker.
-        
-        
-		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-				+ "and Implementation/project topics/social_networks/sorted_files/";
-		String fileName = "comment_hasCreator_person_sf2.csv";
-        
-        // this is wrong, do not do it !!!
-        //  Map<String,List<Long>> map
-
-        //correct way is to use composite set, where 'map key' is primary key and 'map value' is secondary value
-        NavigableSet<Fun.Tuple2<Long,Long>> multiMap = db.getTreeSet("test2");
-
-        //optionally you can use set with Delta Encoding. This may save lot of space
-//        multiMap = db.createTreeSet("test2")
-//                .serializer(BTreeKeySerializer.TUPLE2)
-//                .make();
-
-		final FileReader fileReader2 = new FileReader(new File(filePath
-				+ fileName));
-		final BufferedReader br = new BufferedReader(fileReader2);
-        String line; 
-        int counter =0; 
-		while((line=br.readLine())!=null)
-		{
-			if(++counter%100000==0)
-			{
-				System.out.println(counter); 
-			}
-			StringTokenizer st = new StringTokenizer(line, "|");
-			String commentId = st.nextToken();
-			String personId = st.nextToken();
-	        multiMap.add(Fun.t2(Long.valueOf(personId),Long.valueOf(commentId)));
-	        
-		}
-
-
-        //find all values for a key
-//        for(Long l: Fun.filter(multiMap, 9999L)){
-//            System.out.println("value for key 'person': "+l);
-//        }
+	
+	
+//	//TODO: compare the insertions in documentation 
+//	public static void testMultiMap(String [] args) throws IOException
+//	{
+//		File dbFile = new File(
+//				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+//						+ "and Implementation/project topics/social_networks/sorted_files/multimapdb.index");
+//		
+//        DB db = //DBMaker.newMemoryDB().make();
+//        		DBMaker.newFileDB(dbFile).make();
+////        DBMaker.
+//        
+//        
+//		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+//				+ "and Implementation/project topics/social_networks/sorted_files/";
+//		String fileName = "comment_hasCreator_person_sf2.csv";
+//        
+//        // this is wrong, do not do it !!!
+//        //  Map<String,List<Long>> map
 //
-//        //check if pair exists
+//        //correct way is to use composite set, where 'map key' is primary key and 'map value' is secondary value
+//        NavigableSet<Fun.Tuple2<Long,Long>> multiMap = db.getTreeSet("test2");
 //
-//        boolean found = multiMap.contains(Fun.t2("bb",1L));
-//        System.out.println("Found: " + found);
-
-        db.close();
-	}
+//        //optionally you can use set with Delta Encoding. This may save lot of space
+////        multiMap = db.createTreeSet("test2")
+////                .serializer(BTreeKeySerializer.TUPLE2)
+////                .make();
+//
+//		final FileReader fileReader2 = new FileReader(new File(filePath
+//				+ fileName));
+//		final BufferedReader br = new BufferedReader(fileReader2);
+//        String line; 
+//        int counter =0; 
+//		while((line=br.readLine())!=null)
+//		{
+//			if(++counter%100000==0)
+//			{
+//				System.out.println(counter); 
+//			}
+//			StringTokenizer st = new StringTokenizer(line, "|");
+//			String commentId = st.nextToken();
+//			String personId = st.nextToken();
+//	        multiMap.add(Fun.t2(Long.valueOf(personId),Long.valueOf(commentId)));
+//	        
+//		}
+//
+//
+//        //find all values for a key
+////        for(Long l: Fun.filter(multiMap, 9999L)){
+////            System.out.println("value for key 'person': "+l);
+////        }
+////
+////        //check if pair exists
+////
+////        boolean found = multiMap.contains(Fun.t2("bb",1L));
+////        System.out.println("Found: " + found);
+//
+//        db.close();
+//	}
 	
 	//just a test 
 	public static void main (String [] args) throws IOException
@@ -662,7 +817,8 @@ public class MapDBIndexer {
 //		testDataPump(args); 
 //		testMultiMap(args);
 //		indexCommentReplyOfComment(args);
-		Index();
+		indexPersonKnowsPerson(args); 
+		//Index();
 //		buildIndexFinalFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
 //				+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv");
 		
