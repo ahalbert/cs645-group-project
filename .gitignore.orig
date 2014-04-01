@@ -7,11 +7,13 @@
 
 workbench.xmi
 .classpath
-.classpath.*
 .gitignore
 *.csv
 data
+<<<<<<< HEAD
 /bin
+=======
 Test.java
 org.eclim.prefs
 outputDir-1k/*
+>>>>>>> e23f3d4fa24ad98df63131308f51a5c14cb2ca0b
