@@ -45,6 +45,7 @@ public class MapDBIndexer {
 	static BTreeMap<Integer,String> treeMapCommentsForPerson = null; 
 	static BTreeMap<Integer,Integer> treeMapCommentsResponseOfComments = null; 
 	static BTreeMap<Integer,String> treeMapPersonKnowsPerson = null; 
+	static BTreeMap<String,Integer> treeMapNumberCommentsPersonToPerson = null; 
 	//step 1: index comment_to_person to access by comment and get the respective person_id
 	//step 2: index iterate over person_to_person
 	public static void Index() throws IOException
@@ -107,10 +108,6 @@ public class MapDBIndexer {
 		buildIndexFinalFile(fileOutputPath);
 	}
 	
-	public void getUsersConnected(Integer currentElement, Integer comments)
-	{
-		
-	}
 	
 	static void buildIndexFinalFile(String pathFile) throws IOException
 	{
@@ -374,6 +371,36 @@ public class MapDBIndexer {
 		return valOftreeMap; 
 	}
 	
+	public static Integer getMaxNumberOfComments(Integer personId1, Integer personId2)
+	{
+		if(treeMapNumberCommentsPersonToPerson==null)
+		{
+			File dbFile = new File(
+				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+						+ "and Implementation/project topics/social_networks/sorted_files/final_index.index");
+			DB db = DBMaker.newFileDB(dbFile)
+					/** disabling Write Ahead Log makes import much faster */
+					.transactionDisable().make();
+		
+			treeMapNumberCommentsPersonToPerson = db.getTreeMap("map");
+		}
+		Integer comments = treeMapNumberCommentsPersonToPerson.get(personId1 + "_" + personId2);
+		if(comments.equals(0))
+		{
+			return 0; 
+		}
+		Integer comments2 = treeMapNumberCommentsPersonToPerson.get(personId1 + "_" + personId2);
+		
+		if(comments>comments2)
+		{
+			return comments2; 
+		}
+		else
+		{
+			return comments; 
+		}
+	}
+	
 	public String getPersonKnowsPerson(Integer personId)
 	{
 		if(treeMapPersonKnowsPerson==null)
@@ -385,9 +412,9 @@ public class MapDBIndexer {
 					/** disabling Write Ahead Log makes import much faster */
 					.transactionDisable().make();
 		
-			treeMapCommentsForPerson = db.getTreeMap("map");
+			treeMapPersonKnowsPerson = db.getTreeMap("map");
 		}
-		String valOftreeMap = treeMapCommentsForPerson.get(personId);
+		String valOftreeMap = treeMapPersonKnowsPerson.get(personId);
 		return valOftreeMap; 
 		
 	}
@@ -408,20 +435,30 @@ public class MapDBIndexer {
 		Integer valOftreeMap = treeMapCommentsResponseOfComments.get(commentId);
 		return valOftreeMap; 
 	}
-	public ArrayList<Integer> getUsersConnected()
+	
+	public boolean isEnoughComments(Integer currentElement, Integer neighbour, Integer comments)
+	{
+		Integer minComments = getMaxNumberOfComments(currentElement, neighbour);
+		
+		return(minComments>comments);
+	}
+	public ArrayList<Integer> getUsersConnected(Integer personId)
 	{
 		String persons = getPersonKnowsPerson(personId);
-		HashSet<String> commentsRepplied = new HashSet<String>(); 
 		if(persons==null)
 		{
-			return commentsRepplied;
+			return new ArrayList<Integer>();
 		}
+//		return Lists.newArrayList(Splitter.on(",").split(persons));
+		ArrayList<Integer> personsConnected = new ArrayList<Integer>(); 
+		
 		StringTokenizer st = new StringTokenizer(persons, ",");
 		while(st.hasMoreTokens())
 		{
-			commentsRepplied.add(String.valueOf(getCommentReplied(Integer.valueOf(st.nextToken()))));
+			
+			personsConnected.add(Integer.valueOf(st.nextToken()));
 		}
-		return commentsRepplied; 
+		return personsConnected; 
 		
 	}
 	public static void indexPersonKnowsPerson(String[] args) throws IOException {
@@ -481,10 +518,19 @@ public class MapDBIndexer {
 					{
 						br.readLine(); 
 					}
+					if(counter%100==0)
+					{
+						System.out.println(counter);
+					}
 					String line = br.readLine();
 					StringTokenizer st = new StringTokenizer(line, "|");
 					personId1 = Integer.valueOf(st.nextToken());
+
 					personId2 = st.nextToken();
+					if(personId1.equals(858))
+					{
+						System.out.println("here we go");
+					}
 
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -817,6 +863,8 @@ public class MapDBIndexer {
 //		testDataPump(args); 
 //		testMultiMap(args);
 //		indexCommentReplyOfComment(args);
+//		buildIndexFinalFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+//				+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv");
 		indexPersonKnowsPerson(args); 
 		//Index();
 //		buildIndexFinalFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "

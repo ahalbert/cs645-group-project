@@ -188,10 +188,12 @@ public class ExecuterQuery1 {
 //					Boolean isEnoughComments = luceneIndexer.isEnoughComments(currentElement, neighbour, comments, IndexedLoaderQuery1.indexCommentsPath);
 					if(neighbourDistance==null/*&&isEnoughComments*/)
 					{
-						mapDbIndexer.isEnoughComments(currentElement, neighbour, comments, IndexedLoaderQuery1.indexCommentsPath);
-						
-						distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
-						queue.add(neighbour);
+						Boolean isEnoughComments = mapDbIndexer.isEnoughComments(currentElement, neighbour, comments);
+						if(isEnoughComments)
+						{
+							distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
+							queue.add(neighbour);
+						}
 					}
 					else
 					{
@@ -226,8 +228,9 @@ public class ExecuterQuery1 {
 		
 		ExecuterQuery1 executerQuery1 = new ExecuterQuery1(); 
 //		executerQuery1.findPath(58,402,2);
-		executerQuery1.findPath(858,587,1);
-		executerQuery1.findPathWithIndex(858, 587,1);
+//		executerQuery1.findPath(858,587,1);
+//		executerQuery1.findPathWithIndex(858, 587,1);
+		executerQuery1.findPathWithIndexBTree(858, 587,1);
 		System.out.println("The end 2");
 	}
 }
