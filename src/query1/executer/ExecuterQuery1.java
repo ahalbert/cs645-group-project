@@ -230,7 +230,9 @@ public class ExecuterQuery1 {
 //		executerQuery1.findPath(58,402,2);
 //		executerQuery1.findPath(858,587,1);
 //		executerQuery1.findPathWithIndex(858, 587,1);
-		executerQuery1.findPathWithIndexBTree(858, 587,1);
+		long time = System.currentTimeMillis();
+		executerQuery1.findPathWithIndexBTree(858, 58700,1);
+		System.out.println(System.currentTimeMillis()-time);
 		System.out.println("The end 2");
 	}
 }

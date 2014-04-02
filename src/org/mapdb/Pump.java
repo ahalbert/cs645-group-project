@@ -517,19 +517,31 @@ public final class Pump {
         //traverse iterator
         K oldKey = null;
         boolean notAdded=false; 
+        boolean ignoredDuplicates = false; 
+    	E next = null; 
         while(source.hasNext()){
-
             nodeLoop:for(int i=0;i<nload && source.hasNext();i++){
                 counter++;
-                E next = source.next();
+                if(!ignoredDuplicates)
+                {
+                	next = source.next();
+                }
+                
+                ignoredDuplicates=false; 
                 if(next==null) throw new NullPointerException("source returned null element");
                 K key = keyExtractor==null? (K) next : keyExtractor.run(next);
+                K keyTemp = null;
 //                concatCommentsIds = new StringBuilder("");
                 int compared=oldKey==null?-1:comparator.compare(key, oldKey);
                 //kzaporojets, if new, add previous
+                if(key.equals(858))
+                {
+                	System.out.println("inside pump again");
+                }
                 if(compared!=0&&notAdded)
                 {
                 	values.add(concatCommentsIds.toString());
+                	keys.add(key);
                 	notAdded=false; 
                 	concatCommentsIds = new StringBuilder("");
                 }
@@ -537,51 +549,64 @@ public final class Pump {
                 {
                 	concatCommentsIds.append(",");
                 }
+
                 concatCommentsIds.append(valueExtractor.run(next).toString());
                 while(ignoreDuplicates && compared==0){
                     //move to next
-                    if(!source.hasNext())break nodeLoop;
+                    if(!source.hasNext())
+                    {
+                    	keys.add(key);
+                    	values.add(concatCommentsIds.toString());
+                    	break nodeLoop;
+                    }
                     next = source.next();
-                    
+                    ignoredDuplicates=true; 
                     if(next==null) throw new NullPointerException("source returned null element");
-                    key = keyExtractor==null? (K) next : keyExtractor.run(next);
-                    compared=comparator.compare(key, oldKey);
+                    keyTemp = keyExtractor==null? (K) next : keyExtractor.run(next);
+                    compared=comparator.compare(keyTemp, oldKey);
                     if(compared==0)
                     {
 	                    concatCommentsIds.append(",");
 	                    concatCommentsIds.append(valueExtractor.run(next).toString());
                     }
                 }
+                if(oldKey!=null && compared>=0)
+                    throw new IllegalArgumentException("Keys in 'source' iterator are not reverse sorted");
+//                if(keys.contains(key))
+//                {
+//                	System.out.println("ERROR: adding the same!!!");
+//                }
+        		
+        		
+
                 if(notAdded)
                 {
                 	notAdded=false; 
                 	values.add(concatCommentsIds.toString());
                 	concatCommentsIds = new StringBuilder("");
-                }
-                if(oldKey!=null && compared>=0)
-                    throw new IllegalArgumentException("Keys in 'source' iterator are not reverse sorted");
-                oldKey = key;
-                keys.add(key);
-
-//                Object val = valueExtractor!=null?valueExtractor.run(next):BTreeMap.EMPTY;
-//                if(val==null) throw new NullPointerException("extractValue returned null value");
-//                if(valuesStoredOutsideNodes){
-//                    long recid = engine.put((V) val,valueSerializer);
-//                    val = new BTreeMap.ValRef(recid);
-//                }
-                //kzaporojets
-                if(counter>1)
-                {
-                	//values.add(val);
-                	values.add(concatCommentsIds.toString());
-                	notAdded=false;
-                	concatCommentsIds = new StringBuilder("");
+                	keys.add(key);
                 }
                 else
                 {
-                	notAdded=true;
+	                //kzaporojets
+	                if(counter>1)
+	                {
+	                	//values.add(val);
+	                	values.add(concatCommentsIds.toString());
+	                	notAdded=false;
+	                	concatCommentsIds = new StringBuilder("");
+	                	keys.add(key);
+	                }
+	                else
+	                {
+	                	notAdded=true;
+	                }
                 }
-
+                if(ignoredDuplicates)
+                {
+                	key=keyTemp;
+                }
+                oldKey = key;                
             }
             //insert node
             if(!source.hasNext()){

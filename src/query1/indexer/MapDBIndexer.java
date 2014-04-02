@@ -91,6 +91,10 @@ public class MapDBIndexer {
 			commentsPersonB = getCommentsHash(tuple2.b);
 			
 			Integer setsIntersected = Sets.intersection(commentsRepplied, commentsPersonB).size();
+			if(tuple2.a.equals(858))
+			{
+				System.out.println("Here we go again");
+			}
 			StringBuilder line = new StringBuilder("");
 			line.append(tuple2.a);
 			line.append("|");
@@ -161,6 +165,14 @@ public class MapDBIndexer {
 					personId2 = Integer.valueOf(st.nextToken());
 					quantity = Integer.valueOf(st.nextToken());
 
+					if(personId1.equals(858))
+					{
+						System.out.println("again in final indexing");
+					}
+					if(personId2.equals(858))
+					{
+						System.out.println("again for personId2 in final indexing");
+					}
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -389,7 +401,7 @@ public class MapDBIndexer {
 		{
 			return 0; 
 		}
-		Integer comments2 = treeMapNumberCommentsPersonToPerson.get(personId1 + "_" + personId2);
+		Integer comments2 = treeMapNumberCommentsPersonToPerson.get(personId2 + "_" + personId1);
 		
 		if(comments>comments2)
 		{
@@ -518,16 +530,16 @@ public class MapDBIndexer {
 					{
 						br.readLine(); 
 					}
-					if(counter%100==0)
-					{
-						System.out.println(counter);
-					}
+//					if(counter%100==0)
+//					{
+//						System.out.println(counter);
+//					}
 					String line = br.readLine();
 					StringTokenizer st = new StringTokenizer(line, "|");
 					personId1 = Integer.valueOf(st.nextToken());
 
 					personId2 = st.nextToken();
-					if(personId1.equals(858))
+					if(personId1.equals(858) && personId2.equals(9848))
 					{
 						System.out.println("here we go");
 					}
@@ -862,11 +874,12 @@ public class MapDBIndexer {
 //		retrieveDataPump(args); 
 //		testDataPump(args); 
 //		testMultiMap(args);
+//		indexCommentHasCreatorPerson(args);
 //		indexCommentReplyOfComment(args);
 //		buildIndexFinalFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
 //				+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv");
-		indexPersonKnowsPerson(args); 
-		//Index();
+//		indexPersonKnowsPerson(args); 
+//		Index();
 //		buildIndexFinalFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
 //				+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv");
 		
