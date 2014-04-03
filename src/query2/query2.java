@@ -52,11 +52,12 @@ public class query2 {
         try {
             BufferedReader file = new BufferedReader(new FileReader("data/person.csv"));
             String s;
-            file.readLine();
 	        while (( s = file.readLine() ) != null)  {
-                String[] values = s.split("\\|");
-                String birthday = values[4];
-                bdates.put(birthday,s);
+	            if (s.compareTo("id|firstName|lastName|gender|birthday|creationDate|locationIP|browserUsed") != 0) {
+                    String[] values = s.split("\\|");
+                    String birthday = values[4];
+                    bdates.put(birthday,s);
+                }
 	        }
             file.close();
             BufferedWriter wfile = new BufferedWriter(new FileWriter("data/person.csv"));
