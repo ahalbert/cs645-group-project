@@ -20,9 +20,13 @@ public class query2 {
 	public TreeMap<String, Integer> interestSize;
 	public Calendar lastCalendar = Calendar.getInstance();
 	private HashMap<String, Integer> map;
+    private HashMap<String, Integer> hashindex = new HashMap<String, Integer>();
+    private String indexType;
 	
-	public query2() {
-        	
+	public query2(String mode) {
+	    indexType = mode;
+        if(mode.compareTo("hash") == 0)
+            hashIndex();
 	}
 
 	public void queries() {
@@ -52,11 +56,12 @@ public class query2 {
         try {
             BufferedReader file = new BufferedReader(new FileReader("data/person.csv"));
             String s;
-            file.readLine();
 	        while (( s = file.readLine() ) != null)  {
-                String[] values = s.split("\\|");
-                String birthday = values[4];
-                bdates.put(birthday,s);
+	            if (s.compareTo("id|firstName|lastName|gender|birthday|creationDate|locationIP|browserUsed") != 0) {
+                    String[] values = s.split("\\|");
+                    String birthday = values[4];
+                    bdates.put(birthday,s);
+                }
 	        }
             file.close();
             BufferedWriter wfile = new BufferedWriter(new FileWriter("data/person.csv"));
@@ -140,6 +145,7 @@ public class query2 {
                 peopleWithInterest.put(kvpair.getKey(), kvpair.getValue());
             }
 	    }
+	    //
 
 	    it = peopleWithInterest.entrySet().iterator();
 	    ArrayList<Person> visited = new ArrayList<Person>();
@@ -151,6 +157,8 @@ public class query2 {
                 trees.add(kvpair.getValue());
                 ArrayList<Person> v = getConnectedNodes(kvpair.getValue(), interest);
                 Iterator ita = v.iterator();
+                if (interest.compareTo("416") == 0)
+                    System.out.println(v.size());
                 while(ita.hasNext()) {
                     visited.add((Person)ita.next());
                 }
@@ -164,6 +172,8 @@ public class query2 {
 	 * */
 
 	private ArrayList<Person> getConnectedNodes(Person p, String interest) {
+	    boolean debug;
+	    if ()
 	    ArrayDeque<Person> nextQueue = new ArrayDeque <Person>();
 	    nextQueue.push(p);
 	    ArrayList<Person> found = new ArrayList<Person>();
@@ -279,8 +289,28 @@ public class query2 {
                    source.addFriend(target);
             }
 	    } catch(IOException e) { e.printStackTrace(); }
-	}
+	} 
 
+    private void  hashIndex() {
+        String s;
+        try {
+            BufferedReader file = new BufferedReader(new FileReader("./data/person_hasInterest_tag.csv"));
+            file.readLine();
+            int lineCount = 1;
+            String oldPerson = "";
+            while((s = file.readLine()) != null) {
+                String[] values = s.split("\\|");
+                String person = values[0];
+                if(person.compareTo(oldPerson) != 0) {
+                    oldPerson = person; 
+                    hashindex.put(person,lineCount);
+                }
+                lineCount++;
+            }
+            file.close();
+        } catch(IOException e) {
+        }
+    }
     //Used to order tree maps by value 
     private class ValueComparator implements Comparator<String> {
 

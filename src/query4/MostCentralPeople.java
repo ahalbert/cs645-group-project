@@ -35,7 +35,7 @@ public class MostCentralPeople {
 		this.dir = dataDir;
 		// Code below was stolen from Armand
 		try {
-            BufferedReader file = new BufferedReader(new FileReader(queryF));
+            BufferedReader file = new BufferedReader(new FileReader(dataDir + queryF));
             String s;
             while (( s = file.readLine() ) != null)  {
                 s = s.substring(7, s.length()-1);
@@ -134,8 +134,6 @@ public class MostCentralPeople {
             file.close();
         } catch (IOException e) { e.printStackTrace(); }
 		
-		System.out.println("Finding people...");
-		
 		//Find concerned people
 		try {
             BufferedReader file = new BufferedReader(new FileReader(this.dir + forumMemberFile));
@@ -154,14 +152,13 @@ public class MostCentralPeople {
             file.close();
         } catch (IOException e) { e.printStackTrace(); }
 		
-		System.out.println(concernedPeople.size() + " people concerned.");
+		// System.out.println(concernedPeople.size() + " people concerned.");
 		
 		//Add concerned people to the graph
 		for(Integer id : concernedPeople){
 			graph.add(new CentralPerson(id));
 		}
-		
-		System.out.println("People added to the graph.");
+	
 		
 		//Populate friendship arrays
 		try {
@@ -186,8 +183,6 @@ public class MostCentralPeople {
             }
             file.close();
         } catch (IOException e) { e.printStackTrace(); }
-		
-		System.out.println("Friendships incorporated.");
 		
 		return graph;
 	}
