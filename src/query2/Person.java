@@ -1,5 +1,6 @@
 package query2;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Person {
 	public String id;
@@ -15,5 +16,14 @@ public class Person {
 
 	public void addFriend(Person friend) {
         friends.add(friend);
+	}
+	public boolean hasInterest(String i) {
+	    Iterator<String> it = interests.iterator();
+        while (it.hasNext()) {
+            String s = it.next();
+            if(s.compareTo(i) == 0)
+                return true;
+        }
+        return false;
 	}
 }

@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.Queue;
 import java.util.ArrayDeque;
 
 public class query2 {
@@ -21,12 +20,15 @@ public class query2 {
 	public Calendar lastCalendar = Calendar.getInstance();
 	private HashMap<String, Integer> map;
     private HashMap<String, Integer> hashindex = new HashMap<String, Integer>();
+    private TreeMap<String, Integer> Btreeindex = new TreeMap<String, Integer>();
     private String indexType;
 	
 	public query2(String mode) {
 	    indexType = mode;
         if(mode.compareTo("hash") == 0)
             hashIndex();
+        if(mode.compareTo("tree") == 0)
+            treeIndex();
 	}
 
 	public void queries() {
@@ -52,7 +54,8 @@ public class query2 {
 	}
 
 	public void sortFile() {
-        TreeMap<String, String> bdates = new TreeMap<String, String>();
+        TreeMap<String, ArrayList<String>> bdates = new TreeMap<String, ArrayList<String>>();
+
         try {
             BufferedReader file = new BufferedReader(new FileReader("data/person.csv"));
             String s;
@@ -60,15 +63,21 @@ public class query2 {
 	            if (s.compareTo("id|firstName|lastName|gender|birthday|creationDate|locationIP|browserUsed") != 0) {
                     String[] values = s.split("\\|");
                     String birthday = values[4];
-                    bdates.put(birthday,s);
+                    ArrayList<String> al = bdates.get(birthday);
+                    if(al == null)
+                        bdates.put(birthday, new ArrayList<String>());
+                    al = bdates.get(birthday);
+                    al.add(s);
                 }
 	        }
             file.close();
             BufferedWriter wfile = new BufferedWriter(new FileWriter("data/person.csv"));
             Iterator it = bdates.descendingMap().entrySet().iterator();
             while(it.hasNext()) {
-                Map.Entry<String, String> kvpair = (Map.Entry)it.next();
-                wfile.write(kvpair.getValue()+"\n");
+                Map.Entry<String, ArrayList<String>> kvpair = (Map.Entry<String, ArrayList<String>>)it.next();
+                Iterator ita = kvpair.getValue().iterator();
+                while (ita.hasNext())
+                    wfile.write(ita.next()+"\n");
             }
             wfile.close();
         } catch(Exception e) {}
@@ -80,40 +89,155 @@ public class query2 {
         interestSize = new TreeMap<String, Integer>(c);
 	    loadPeople(d);
         
-	    HashMap<String, Integer> tagmap = new HashMap<String,Integer>();
-	    ValueComparator c2 = new ValueComparator(tagmap);
-        TreeMap<String, Integer> tags = new TreeMap<String, Integer>(c2);
+        TreeMap<Integer, ArrayList<String>> tags = new TreeMap<Integer, ArrayList<String>>();
 
         Iterator it = interestSize.entrySet().iterator();
+        int[] khighest = new int[k];
+        for (int i = 0; i < k; i++) 
+            khighest[i] = 0;
         while (it.hasNext()) {
             Map.Entry<String, Integer> kvpair = (Map.Entry)it.next();
-            int tagsize = searchInterest(kvpair.getKey());
-            tagmap.put(kvpair.getKey(), tagsize );
-        }
-        tags.putAll(tagmap);
-        System.out.println(tags);
-        it = tags.entrySet().iterator();
-        
-        ArrayList<String> ret = new ArrayList<String>();
-        int sz = -1;
-        for (int i = 0; i < k; i++)  {
-            Map.Entry<String,Integer> tag = (Map.Entry<String,Integer>)it.next();
-            sz = tag.getValue();
-            System.out.println(tag.getKey() + " "+ lookupTagDef(tag.getKey()));
-            String s = lookupTagDef(tag.getKey());
-            ret.add(s);
+            if (kvpair.getValue() < khighest[k-1])
+                break;
+            int tagsize = getLargestFamily(kvpair.getKey());
+            insertIntoKhighestArray(tagsize, khighest);
+            if (tags.get(tagsize) == null)
+                tags.put(tagsize, new ArrayList<String>());
+            ArrayList<String> al = tags.get(tagsize);
+            insertIntoArrayList(al, lookupTagDef(kvpair.getKey()));
         }
 
-        Map.Entry<String,Integer> tag = (Map.Entry<String,Integer>)it.next();
-        while(tag.getValue() == sz) {
-            System.out.println(tag.getKey() + " "+ lookupTagDef(tag.getKey()));
-            String s = lookupTagDef(tag.getKey());
-            ret.add(s);
-            tag = (Map.Entry<String,Integer>)it.next();
+        ArrayList<String> ret = new ArrayList<String>();
+        it = tags.descendingMap().entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Integer, ArrayList<String>> a = (Map.Entry<Integer, ArrayList<String>>)it.next(); 
+            ArrayList<String> al = a.getValue();
+            if(k == 0) {
+                break;
+            }
+                if(k > 0) {
+                    Iterator ita = al.iterator();
+                    while (ita.hasNext() && k > 0) {
+                        System.out.print(ita.next() + " ");
+                        k--; 
+                    }
+                }
         }
-        System.out.println(ret);
 	    return ret;
 	} 
+
+	private void insertIntoKhighestArray(int a, int[] array) {
+        for (int i = 0; i < array.length; i++)  {
+            if(array[i] == 0) {
+                array[i] = a;
+                return;
+            }
+        }
+        for (int i = 0; i < array.length; i++)  {
+            if (a > array[i]){
+                int temp = a;
+                for (int j = i; j < array.length; j++) {
+                        int temp2 = array[i];
+                        array[i] = temp;
+                        temp = temp2;
+                }
+            }
+        }
+	}
+
+    private void insertIntoArrayList(ArrayList<String> a, String item) {
+        Iterator<String> it = a.iterator();
+        int loc = -1;
+        boolean added = false;
+        while (it.hasNext()) {
+            String s = it.next(); 
+            loc++;
+            if(precedence(item, s)) {
+                a.add(loc, item);
+                added = true;
+                break;
+            }
+        }
+        if (!added) 
+            a.add(item); 
+    }
+    private boolean precedence(String a, String b) {
+        int minLength = Math.min(a.length(), b.length());
+        for (int i = 0; i < minLength; i++ )  {
+            if (Character.isLetter(a.charAt(i)) && !Character.isLetter(b.charAt(i)))
+                return true;
+            if (!Character.isLetter(a.charAt(i)) && Character.isLetter(b.charAt(i)))
+                return false;
+            else if (Character.toLowerCase(a.charAt(i)) < Character.toLowerCase(b.charAt(i)))
+                return true;
+            else if (Character.toLowerCase(a.charAt(i)) > Character.toLowerCase(b.charAt(i)))
+                return false;
+        }
+        if (a.length() > b.length())
+            return true;
+        return false;
+    }
+
+    private int getLargestFamily(String interest) {
+        ArrayList<Person> visited = new ArrayList<Person>();
+        int familySize = 0;
+        int t;
+	    Iterator<Map.Entry<String,Person>> it = people.entrySet().iterator();
+        Person p = it.next().getValue();
+	    while (it.hasNext()) {
+	        if (!visited.contains(p) && p.hasInterest(interest)) {
+                t = BFS(p, interest, visited);
+                if (t > familySize) {
+                    familySize = t;
+                }
+	        }
+            p = it.next().getValue(); 
+	    }
+        return familySize;
+    }
+
+    private int BFS(Person p, String interest, ArrayList<Person> visited) {
+        int size = 1;
+	    ArrayDeque<Person> nextQueue = new ArrayDeque<Person>();
+	    ArrayList<Person> friends = getFriendsWithInterest(p, interest);
+        Iterator<Person> it = friends.iterator();
+        Person temp;
+	    while(it.hasNext()) {
+            temp = it.next();
+	        if (!visited.contains(temp)) {
+                nextQueue.push(temp);
+                visited.add(temp);
+                size++;
+	        }
+	    }
+	    while(!nextQueue.isEmpty()) {
+            temp = nextQueue.pop();
+            friends = getFriendsWithInterest(temp, interest);
+            it = friends.iterator();
+            while(it.hasNext()) {
+                temp = it.next();
+                if (!visited.contains(temp)) {
+                    nextQueue.push(temp);
+                    visited.add(temp);
+                    size++;
+                }
+            }
+	    }
+	    return size;
+    }
+
+    private ArrayList<Person> getFriendsWithInterest(Person p, String interest) {
+        ArrayList<Person> friends = new ArrayList<Person>();
+        Iterator<Person> it = p.friends.iterator();
+        Person friend;
+        while (it.hasNext()) {
+           friend = it.next(); 
+           if (friend.hasInterest(interest)) {
+                friends.add(friend); 
+           }
+        }
+        return friends;
+    }
 
     private String lookupTagDef(String tag) {
         try {
@@ -132,92 +256,6 @@ public class query2 {
         return "";
     }
 
-    /*
-     * Gets a starting point for each tree.
-     * Optimization: We essentially double-calculate the size of a tree. We should only do this once.
-     * */ 
-	private ArrayList<Person> getTreesInForest(String interest) {
-	    HashMap<String, Person> peopleWithInterest = new HashMap<String, Person>();
-	    Iterator it = people.entrySet().iterator();
-	    while (it.hasNext()) {
-            Map.Entry<String, Person> kvpair = (Map.Entry)it.next();
-            if (kvpair.getValue().interests.contains(interest)) {
-                peopleWithInterest.put(kvpair.getKey(), kvpair.getValue());
-            }
-	    }
-	    //
-
-	    it = peopleWithInterest.entrySet().iterator();
-	    ArrayList<Person> visited = new ArrayList<Person>();
-	    ArrayList<Person> trees = new ArrayList<Person>();
-	    while(it.hasNext()) {
-            Map.Entry<String, Person> kvpair = (Map.Entry)it.next();
-            if(!visited.contains(kvpair.getValue())) {
-                visited.add(kvpair.getValue());
-                trees.add(kvpair.getValue());
-                ArrayList<Person> v = getConnectedNodes(kvpair.getValue(), interest);
-                Iterator ita = v.iterator();
-                if (interest.compareTo("416") == 0)
-                    System.out.println(v.size());
-                while(ita.hasNext()) {
-                    visited.add((Person)ita.next());
-                }
-            }
-        }
-	    return trees;
-	}
-
-	/*
-	 * Gets all person_knows_person connections where persons share an interest.
-	 * */
-
-	private ArrayList<Person> getConnectedNodes(Person p, String interest) {
-	    boolean debug;
-	    if ()
-	    ArrayDeque<Person> nextQueue = new ArrayDeque <Person>();
-	    nextQueue.push(p);
-	    ArrayList<Person> found = new ArrayList<Person>();
-	    found.add(p);
-	    while (!nextQueue.isEmpty()) {
-            Person person = nextQueue.pop();
-            Iterator it = person.friends.iterator();
-            while (it.hasNext()) {
-                Person f = (Person)it.next();
-                if (! found.contains(f) && isStringInArrayList(f.interests, interest)) {
-                    found.add(f);
-                    nextQueue.add(f);
-                }
-            }
-        }
-	    return found;
-	}
-
-    //TODO: Remove this.
-	private boolean isStringInArrayList(ArrayList<String> list, String s) {
-	    Iterator it = list.iterator();
-	    while(it.hasNext()) {
-	        if (s.compareTo((String)it.next()) == 0) 
-	            return true;
-	    }
-        return false;	
-	}
-
-
-    /*
-     * Gets largest tree for interest i
-     * */ 
-	private int searchInterest(String interest) {
-	    ArrayList<Person> treeStart = getTreesInForest(interest);
-	    int size = 0;
-	    Iterator it = treeStart.iterator();
-	    while (it.hasNext()) {
-	        int graphSize = getConnectedNodes((Person)it.next(), interest).size();
-	        if ( graphSize > size)  {
-	            size = graphSize;
-	        }
-	    }
-        return size;	
-	}
 
     /* Loads people into the data structure, gathers their interests, and 
      * The interestSize hash table is used to sort the interests by the largest size.
@@ -227,6 +265,7 @@ public class query2 {
     
 	private void loadPeople(Calendar d) {
 	    //Assumes file is sorted.
+        people = new TreeMap<String, Person>();
 	    try {
             BufferedReader file = new BufferedReader(new FileReader("data/person.csv"));
             String s;
@@ -260,21 +299,21 @@ public class query2 {
                 String interest = values[1];
                 Person p;
 
-                if ((p = people.get(id)) != null)
+                if ((p = people.get(id)) != null) {
                     p.addInterest(interest);
 
-                Integer  ientry;
+                    Integer  ientry;
                 
                     if((ientry = map.get(interest)) == null)
-                        map.put(interest,0);
-                    else
-                        if (p != null) {
-                            map.put(interest, ientry + 1);
+                        map.put(interest,1);
+                    else {
+                        map.remove(interest);
+                        map.put(interest, ientry + 1);
                     }
+                }
 	        }
             file.close();
             interestSize.putAll(map);
-            System.out.println(interestSize);
 	    } catch(IOException e) { e.printStackTrace(); }
 
 	    try {
@@ -290,6 +329,27 @@ public class query2 {
             }
 	    } catch(IOException e) { e.printStackTrace(); }
 	} 
+
+    private void treeIndex() {
+        String s;
+        try {
+            BufferedReader file = new BufferedReader(new FileReader("./data/person_hasInterest_tag.csv"));
+            file.readLine();
+            int lineCount = 1;
+            String oldPerson = "";
+            while((s = file.readLine()) != null) {
+                String[] values = s.split("\\|");
+                String person = values[0];
+                if(person.compareTo(oldPerson) != 0) {
+                    oldPerson = person; 
+                    Btreeindex.put(person,lineCount);
+                }
+                lineCount++;
+            }
+            file.close();
+        } catch(IOException e) {
+        }
+    }
 
     private void  hashIndex() {
         String s;
@@ -327,6 +387,18 @@ public class query2 {
                 return 1;
             } // returning 0 would merge keys
         }
+    }
+
+    private class SSValueComparator implements Comparator<String> {
+
+        Map<String, String> base;
+        public SSValueComparator(Map<String, String> base) {
+            this.base = base;
+        }
+
+        public int compare(String a, String b) {
+            return a.compareTo(b);
+        } // returning 0 would merge keys
     }
 }
 
