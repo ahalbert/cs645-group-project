@@ -21,9 +21,9 @@ public class IndexedLoaderQuery1 {
 	//by default index does not exist 
 	public static boolean indexCommentHasCreatorPerson = false;  
 	
-	public static String indexCommentsPath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_comments"; 
-	public static String indexPersonCreatorCommentsPath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_person_creator"; 
-	public static String indexPersonKnowsPerson = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_person_knows_person"; 
+	public static String indexCommentsPath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_comments_10k"; 
+	public static String indexPersonCreatorCommentsPath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_person_creator_10k"; 
+	public static String indexPersonKnowsPerson = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_person_knows_person_10k"; 
 	
 	public HashMap<Integer,ArrayList<Integer>> loadData(Integer from, Integer to, Integer numberOfComments, String dataPath)
 	{
@@ -138,8 +138,7 @@ public class IndexedLoaderQuery1 {
 //					+ " topics/social_networks/big_data_files/person_knows_person.csv", indexPersonKnowsPerson,
 //						"|", new String[]{"person_from","person_to"},false);
 			
-			luceneIndexer.indexFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project"
-					+ " topics/social_networks/big_data_files/person_knows_person.csv", indexPersonKnowsPerson,
+			luceneIndexer.indexFile(dataPath + "/person_knows_person.csv", indexPersonKnowsPerson,
 						"|", new String[]{"person_from","person_to"},false);
 
 			if(luceneIndexer.isIndexCreated(this.indexCommentsPath))

@@ -37,9 +37,9 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
  */
 
 public class LuceneIndexer {
-	public static String indexDir = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_files";
-	public static String indexDir2 = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/comment_creator";
-	public static String indexDirV2 = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_files_v2";
+//	public static String indexDir = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_files";
+//	public static String indexDir2 = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/comment_creator";
+//	public static String indexDirV2 = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project topics/social_networks/index_files_v2";
 	
 	
 	static Directory directoryPerson = null;
@@ -106,48 +106,48 @@ public class LuceneIndexer {
 	}
 
 	//TODO: the idea is to index this one combining several values in the same document, in this way grouping it by the desired elements
-	public void indexFileV3(String filePath, String separator, String [] fields) 
-	{
-		try
-		{
-			int counter = 0;
-			int fieldsNumber = fields.length;
-			BufferedReader br = new BufferedReader(new FileReader(filePath));
-			String line = ""; 
-			StringTokenizer st = null;
-			int tknNumber=0;
-			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_47);
-			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_47, analyzer);
-			
-			IndexWriter indexWriter = new IndexWriter(FSDirectory.open(new File(indexDir)),config); 
-			
-			
-			while((line=br.readLine())!=null)
-			{
-				Document doc = new Document(); 
-				st = new StringTokenizer(line,separator);
-				tknNumber=0; 
-				if(++counter%1000==0)
-				{
-					System.out.println(counter);
-				}
-				while(st.hasMoreTokens())
-				{
-					doc.add(new StringField(fields[tknNumber], st.nextToken(), Field.Store.YES));
-					tknNumber++; 
-				}
-				indexWriter.addDocument(doc);
-			}
-//			indexWriter.
-			indexWriter.close();
-			
-		}
-		catch(Exception ex)
-		{
-			System.out.println("Error has happened");
-			ex.printStackTrace();
-		}
-	}	
+//	public void indexFileV3(String filePath, String separator, String [] fields) 
+//	{
+//		try
+//		{
+//			int counter = 0;
+//			int fieldsNumber = fields.length;
+//			BufferedReader br = new BufferedReader(new FileReader(filePath));
+//			String line = ""; 
+//			StringTokenizer st = null;
+//			int tknNumber=0;
+//			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_47);
+//			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_47, analyzer);
+//			
+//			IndexWriter indexWriter = new IndexWriter(FSDirectory.open(new File(indexDir)),config); 
+//			
+//			
+//			while((line=br.readLine())!=null)
+//			{
+//				Document doc = new Document(); 
+//				st = new StringTokenizer(line,separator);
+//				tknNumber=0; 
+//				if(++counter%1000==0)
+//				{
+//					System.out.println(counter);
+//				}
+//				while(st.hasMoreTokens())
+//				{
+//					doc.add(new StringField(fields[tknNumber], st.nextToken(), Field.Store.YES));
+//					tknNumber++; 
+//				}
+//				indexWriter.addDocument(doc);
+//			}
+////			indexWriter.
+//			indexWriter.close();
+//			
+//		}
+//		catch(Exception ex)
+//		{
+//			System.out.println("Error has happened");
+//			ex.printStackTrace();
+//		}
+//	}	
 	//this one works only with lucene
 	public void indexQuery1(String replyIndexPath,String commentsIndexPath, String commentsReplyFilePath){
 		try{
@@ -479,30 +479,30 @@ public class LuceneIndexer {
 		}
 	}	
 	//trying to index the whole file at once, without going row by row
-	public void indexFileV2(String filePath, String separator, String [] fields) 
-	{
-		try
-		{
-			SimpleAnalyzer analyzer = new SimpleAnalyzer(Version.LUCENE_47);
-			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_47, analyzer);
-			
-			IndexWriter indexWriter = new IndexWriter(FSDirectory.open(new File(indexDirV2)),config);
-			Document document = new Document();
-			File file = new File(filePath);
-//			String path = file.getCanonicalPath();
-			document.add(new TextField("contents", new FileReader(file)));
-
-
-			document.add(new StringField("file_name", filePath, Field.Store.YES));
-
-			indexWriter.addDocument(document);
-		}
-		catch(Exception ex)
-		{
-			System.out.println("Error has happened");
-			ex.printStackTrace();
-		}
-	}	
+//	public void indexFileV2(String filePath, String separator, String [] fields) 
+//	{
+//		try
+//		{
+//			SimpleAnalyzer analyzer = new SimpleAnalyzer(Version.LUCENE_47);
+//			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_47, analyzer);
+//			
+//			IndexWriter indexWriter = new IndexWriter(FSDirectory.open(new File(indexDirV2)),config);
+//			Document document = new Document();
+//			File file = new File(filePath);
+////			String path = file.getCanonicalPath();
+//			document.add(new TextField("contents", new FileReader(file)));
+//
+//
+//			document.add(new StringField("file_name", filePath, Field.Store.YES));
+//
+//			indexWriter.addDocument(document);
+//		}
+//		catch(Exception ex)
+//		{
+//			System.out.println("Error has happened");
+//			ex.printStackTrace();
+//		}
+//	}	
 	public static boolean isIndexCreated(String indexPath)
 	{
 		try{
@@ -516,17 +516,17 @@ public class LuceneIndexer {
 		}
 		return true; 
 	}
-	public static void main (String [] args)
-	{
-		LuceneIndexer luceneIndexer = new LuceneIndexer(); 
-		luceneIndexer.indexFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project"
-				+ " topics/social_networks/big_data_files/comment_hasCreator_person.csv", indexDir2,
-					"|", new String[]{"comment","person"},true);
-		
-		
-		luceneIndexer.searchIndex(new File(indexDir),  "comment_from:1380", 999999);
-//		luceneIndexer.searchIndexV2(new File(indexDirV2), "contents:1380|", 999999);
-
-		System.out.println("File indexed");
-	}
+//	public static void main (String [] args)
+//	{
+//		LuceneIndexer luceneIndexer = new LuceneIndexer(); 
+//		luceneIndexer.indexFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design and Implementation/project"
+//				+ " topics/social_networks/big_data_files/comment_hasCreator_person.csv", indexDir2,
+//					"|", new String[]{"comment","person"},true);
+//		
+//		
+//		luceneIndexer.searchIndex(new File(indexDir),  "comment_from:1380", 999999);
+////		luceneIndexer.searchIndexV2(new File(indexDirV2), "contents:1380|", 999999);
+//
+//		System.out.println("File indexed");
+//	}
 }
