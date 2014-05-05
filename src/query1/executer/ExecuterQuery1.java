@@ -24,9 +24,14 @@ public class ExecuterQuery1 {
 	{
 		LoaderQuery1 loaderQuery1 = new LoaderQuery1(); 
 		HashMap<Integer,ArrayList<Integer>> data = null;
+		
+		
+		long time = System.currentTimeMillis();
+		
 		data = loaderQuery1.loadData(userFrom, userTo, comments, "/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
 				+ "Design and Implementation/project topics/social_networks/big_data_files");
 		
+		System.out.println("Time to load the data: " + (System.currentTimeMillis()-time));
 		
 //		ArrayList<Integer> neighbours = data.get(userFrom);
 		LinkedList<Integer> queue = new LinkedList<Integer>(); 
@@ -96,9 +101,10 @@ public class ExecuterQuery1 {
 	{
 		IndexedLoaderQuery1 loaderQuery1 = new IndexedLoaderQuery1(); 
 		LuceneIndexer luceneIndexer = new LuceneIndexer(); 
+		long time = System.currentTimeMillis();
 		loaderQuery1.doIndexPreload("/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
 				+ "Design and Implementation/project topics/social_networks/big_data_files");
-		
+		System.out.println("loading time: " + (System.currentTimeMillis()-time));
 		
 //		ArrayList<Integer> neighbours = data.get(userFrom);
 		LinkedList<Integer> queue = new LinkedList<Integer>(); 
@@ -229,9 +235,11 @@ public class ExecuterQuery1 {
 		ExecuterQuery1 executerQuery1 = new ExecuterQuery1(); 
 //		executerQuery1.findPath(58,402,2);
 //		executerQuery1.findPath(858,587,1);
-//		executerQuery1.findPathWithIndex(858, 587,1);
+//		executerQuery1.findPathWithIndex(858, 587, 1);
 		long time = System.currentTimeMillis();
-		executerQuery1.findPathWithIndexBTree(858, 58700,1);
+		//executerQuery1.findPathWithIndexBTree(858, 58700, 1);
+		//executerQuery1.findPath(858, 58700, 1);91851
+		executerQuery1.findPathWithIndex(858, 587, 1);
 		System.out.println(System.currentTimeMillis()-time);
 		System.out.println("The end 2");
 	}
