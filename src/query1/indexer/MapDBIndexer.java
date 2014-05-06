@@ -9,9 +9,9 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -43,18 +43,41 @@ public class MapDBIndexer {
 	static BTreeMap<Integer,Integer> treeMapCommentsResponseOfComments = null; 
 	static BTreeMap<Integer,String> treeMapPersonKnowsPerson = null; 
 	static BTreeMap<String,Integer> treeMapNumberCommentsPersonToPerson = null; 
+	
+	//to user for hybrid version
+	public static HashMap<String, Integer> commentsPerPerson= new HashMap<String,Integer>(); 
 	//step 1: index comment_to_person to access by comment and get the respective person_id
 	//step 2: index iterate over person_to_person
-	public static void Index() throws IOException
+	public static void Index(String datapath) throws IOException
 	{
 		long time = System.currentTimeMillis(); 
+		File f = new File(datapath + "/sorted_files");
+		if(!f.exists())
+		{
+			f.mkdir();
+		}
+		f = new File(datapath + "/sorted_files/final_index.index");
+		
+		if(f.exists())
+		{
+			//if index was already created, return
+			return; 
+		}
+		
+		indexCommentHasCreatorPerson(datapath);
+		long time2 = System.currentTimeMillis(); 
+		
+		indexCommentReplyOfComment(datapath);
+		
+		System.out.println("New index generation: " + (System.currentTimeMillis()-time2));
 		//step 1: sort the file person_knows_person by person1: already grouped, so this method doesn't sort so far 
-		Iterator<Fun.Tuple2<Integer,Integer>> source = sortPersonKnowsPerson(); 
+		Iterator<Fun.Tuple2<Integer,Integer>> source = sortPersonKnowsPerson(datapath); 
 		
 		//step 2: preload max of comment_response_of_comment from a particular person
 		
-		String fileOutputPath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-				+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv";  
+		String fileOutputPath = datapath + "/sorted_files/final_index.csv";
+				//"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+				//+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv";  
 
 		File outputFile = new File(fileOutputPath);
 		outputFile.delete(); 
@@ -73,14 +96,14 @@ public class MapDBIndexer {
 			Fun.Tuple2<Integer, Integer> tuple2 = source.next();
 			if(currentPerson==null)
 			{
-				commentsRepplied = getCommentsRepplied(Integer.valueOf(tuple2.a)); 
+				commentsRepplied = getCommentsRepplied(Integer.valueOf(tuple2.a), datapath); 
 				currentPerson = tuple2.a; 
 			}
 			else
 			{
 				if(!currentPerson.equals(tuple2.a))
 				{
-					commentsRepplied = getCommentsRepplied(Integer.valueOf(tuple2.a)); 
+					commentsRepplied = getCommentsRepplied(Integer.valueOf(tuple2.a), datapath); 
 					currentPerson = tuple2.a; 
 					//System.out.println(counter); 
 				}
@@ -88,6 +111,7 @@ public class MapDBIndexer {
 			commentsPersonB = getCommentsHash(tuple2.b);
 			
 			Integer setsIntersected = Sets.intersection(commentsRepplied, commentsPersonB).size();
+			
 			if(tuple2.a.equals(858))
 			{
 				System.out.println("Here we go again");
@@ -106,14 +130,94 @@ public class MapDBIndexer {
 		
 		System.out.println("Final indexing time: "
 				+ (System.currentTimeMillis() - time) / 1000 + " sec"); 
-		buildIndexFinalFile(fileOutputPath);
+		buildIndexFinalFile(datapath,datapath+ "/sorted_files/final_index.csv");
 	}
 	
+	public static void HybridIndex(String datapath) throws IOException
+	{
+		long time = System.currentTimeMillis(); 
+		File f = new File(datapath + "/sorted_files");
+		if(!f.exists())
+		{
+			f.mkdir();
+		}
+		f = new File(datapath + "/sorted_files/mapdb.index");
+		if(f.exists())
+		{
+			//if index was already created, return
+			return; 
+		}
+		indexCommentHasCreatorPerson(datapath ); 
+		indexCommentReplyOfComment(datapath);
+		System.out.println("Final indexing time: "
+				+ (System.currentTimeMillis() - time) / 1000 + " sec"); 
+//		//step 1: sort the file person_knows_person by person1: already grouped, so this method doesn't sort so far 
+//		Iterator<Fun.Tuple2<Integer,Integer>> source = sortPersonKnowsPerson(datapath); 
+//		
+//		//step 2: preload max of comment_response_of_comment from a particular person
+//		
+//		String fileOutputPath = datapath + "/sorted_files/final_index.csv";
+//				//"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+//				//+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv";  
+//
+//		File outputFile = new File(fileOutputPath);
+//		outputFile.delete(); 
+//		
+//		int counter = 0; 
+//		Integer currentPerson=null; 
+//		HashSet <String> commentsRepplied = new HashSet<String>(); 
+//		HashSet <String> commentsPersonB = new HashSet<String>(); 
+//		while(source.hasNext())
+//		{
+//			//++counter; 
+//			if(++counter%10000==0)
+//			{
+//				System.out.println("Read comments for: " + counter + " persons");
+//			}
+//			Fun.Tuple2<Integer, Integer> tuple2 = source.next();
+//			if(currentPerson==null)
+//			{
+//				commentsRepplied = getCommentsRepplied(Integer.valueOf(tuple2.a)); 
+//				currentPerson = tuple2.a; 
+//			}
+//			else
+//			{
+//				if(!currentPerson.equals(tuple2.a))
+//				{
+//					commentsRepplied = getCommentsRepplied(Integer.valueOf(tuple2.a)); 
+//					currentPerson = tuple2.a; 
+//					//System.out.println(counter); 
+//				}
+//			}
+//			commentsPersonB = getCommentsHash(tuple2.b);
+//			
+//			Integer setsIntersected = Sets.intersection(commentsRepplied, commentsPersonB).size();
+//			
+//			if(tuple2.a.equals(858))
+//			{
+//				System.out.println("Here we go again");
+//			}
+//			StringBuilder line = new StringBuilder("");
+//			line.append(tuple2.a);
+//			line.append("|");
+//			line.append(tuple2.b);
+//			line.append("|");
+//			line.append(setsIntersected);
+//			line.append("\n");
+//			writeTextFile(line.toString(), outputFile);
+//		}
+//		
+//		//step 3: 
+//		
+//		System.out.println("Final indexing time: "
+//				+ (System.currentTimeMillis() - time) / 1000 + " sec"); 
+//		buildIndexFinalFile(datapath,datapath+ "/sorted_files/final_index.csv");
+	}	
 	
-	static void buildIndexFinalFile(String pathFile) throws IOException
+	static void buildIndexFinalFile(String pathFile, String sortedFile) throws IOException
 	{
 
-		FileReader fileReader = new FileReader(new File(pathFile));
+		FileReader fileReader = new FileReader(new File(sortedFile));
 
 		LineNumberReader lnr = new LineNumberReader(fileReader);
 
@@ -122,15 +226,16 @@ public class MapDBIndexer {
 		// Finally, the LineNumberReader object should be closed to prevent
 		// resource leak
 		lnr.close();
-		final FileReader fileReader2 = new FileReader(new File(pathFile));
+		final FileReader fileReader2 = new FileReader(new File(sortedFile));
 		final BufferedReader br = new BufferedReader(fileReader2);
 
 		/**
 		 * Open database in temporary directory
 		 */
-		File dbFile = new File(
-				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-						+ "and Implementation/project topics/social_networks/sorted_files/final_index.index");
+		File dbFile = new File(pathFile + "/sorted_files/final_index.index"
+//				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+//						+ "and Implementation/project topics/social_networks/sorted_files/final_index.index"
+		);
 		DB db = DBMaker.newFileDB(dbFile)
 		/** disabling Write Ahead Log makes import much faster */
 		.transactionDisable().make();
@@ -281,7 +386,7 @@ public class MapDBIndexer {
 		}
 		return Sets.newHashSet((Splitter.on(",").split(comments)));
 	}
-	public static HashSet<String> getCommentsRepplied(Integer personId)
+	public static HashSet<String> getCommentsRepplied(Integer personId, String datapath)
 	{
 		String comments = getCommentsForPerson(personId);
 		HashSet<String> commentsRepplied = new HashSet<String>(); 
@@ -292,14 +397,13 @@ public class MapDBIndexer {
 		StringTokenizer st = new StringTokenizer(comments, ",");
 		while(st.hasMoreTokens())
 		{
-			commentsRepplied.add(String.valueOf(getCommentReplied(Integer.valueOf(st.nextToken()))));
+			commentsRepplied.add(String.valueOf(getCommentReplied(Integer.valueOf(st.nextToken()), datapath)));
 		}
 		return commentsRepplied; 
 	}
-	public static Iterator<Fun.Tuple2<Integer,Integer>> sortPersonKnowsPerson() throws IOException
+	public static Iterator<Fun.Tuple2<Integer,Integer>> sortPersonKnowsPerson(String datapath) throws IOException
 	{
-		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-				+ "and Implementation/project topics/social_networks/big_data_files/";
+		String filePath = datapath + "/";
 		String fileName = "person_knows_person.csv"; //"comment_replyOf_comment_no_header.csv";
 		
 		final FileReader fileReader2 = new FileReader(new File(filePath
@@ -380,13 +484,68 @@ public class MapDBIndexer {
 		return valOftreeMap; 
 	}
 	
-	public static Integer getMaxNumberOfComments(Integer personId1, Integer personId2)
+	
+	public static Integer getMaxNumberOfCommentsHybrid(Integer personId1, Integer personId2, String datapath)
+	{
+
+//		String key = "";
+//		if(personId1>personId2)
+//		{
+//			key = personId2 + "_" + personId1;
+//		}
+//		else 
+//		{
+//			key = personId1 + "_" + personId2;
+//		}
+		
+//		Integer commentsPPerson = commentsPerPerson.get(key);
+//		if(commentsPPerson!=null)
+//		{
+//			System.out.println("hit");
+//			return commentsPPerson;
+//		}
+		HashSet<String> commentsRepplied = getCommentsRepplied(personId1, datapath); 
+
+				//System.out.println(counter); 
+
+		HashSet<String> commentsPersonB = getCommentsHash(personId2);
+		
+		Integer setsIntersected = Sets.intersection(commentsRepplied, commentsPersonB).size();
+
+		Integer comments =setsIntersected; 
+				// treeMapNumberCommentsPersonToPerson.get(personId1 + "_" + personId2);
+		if(comments.equals(0))
+		{
+//			commentsPerPerson.put(key, 0);
+			return 0; 
+		}
+		commentsRepplied = getCommentsRepplied(personId2, datapath); 
+
+		//System.out.println(counter); 
+
+		commentsPersonB = getCommentsHash(personId1);
+		setsIntersected = Sets.intersection(commentsRepplied, commentsPersonB).size();
+		Integer comments2 = setsIntersected;
+				//treeMapNumberCommentsPersonToPerson.get(personId2 + "_" + personId1);
+		
+		if(comments>comments2)
+		{
+//			commentsPerPerson.put(key, comments2);
+			return comments2; 
+		}
+		else
+		{
+//			commentsPerPerson.put(key, comments);
+			return comments; 
+		}
+	}	
+	
+	public static Integer getMaxNumberOfComments(Integer personId1, Integer personId2, String datapath)
 	{
 		if(treeMapNumberCommentsPersonToPerson==null)
 		{
 			File dbFile = new File(
-				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-						+ "and Implementation/project topics/social_networks/sorted_files/final_index.index");
+				datapath + "/sorted_files/final_index.index");
 			DB db = DBMaker.newFileDB(dbFile)
 					/** disabling Write Ahead Log makes import much faster */
 					.transactionDisable().make();
@@ -410,13 +569,12 @@ public class MapDBIndexer {
 		}
 	}
 	
-	public String getPersonKnowsPerson(Integer personId)
+	public String getPersonKnowsPerson(Integer personId, String datapath)
 	{
 		if(treeMapPersonKnowsPerson==null)
 		{
 			File dbFile = new File(
-				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-						+ "and Implementation/project topics/social_networks/sorted_files/mapdb_person_knows_person.index");
+				datapath + "/sorted_files/mapdb_person_knows_person.index");
 			DB db = DBMaker.newFileDB(dbFile)
 					/** disabling Write Ahead Log makes import much faster */
 					.transactionDisable().make();
@@ -428,13 +586,12 @@ public class MapDBIndexer {
 		
 	}
 	//gets the comment replied by a particular comment
-	public static Integer getCommentReplied(Integer commentId)
+	public static Integer getCommentReplied(Integer commentId, String datapath)
 	{
 		if(treeMapCommentsResponseOfComments==null)
 		{
 			File dbFile = new File(
-					"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-							+ "and Implementation/project topics/social_networks/sorted_files/mapdb_comm_rof_comm.index");
+					datapath + "/sorted_files/mapdb_comm_rof_comm.index");
 			DB db = DBMaker.newFileDB(dbFile)
 			/** disabling Write Ahead Log makes import much faster */
 			.transactionDisable().readOnly().make();
@@ -445,15 +602,22 @@ public class MapDBIndexer {
 		return valOftreeMap; 
 	}
 	
-	public boolean isEnoughComments(Integer currentElement, Integer neighbour, Integer comments)
+	public boolean isEnoughComments(Integer currentElement, Integer neighbour, Integer comments, String datapath)
 	{
-		Integer minComments = getMaxNumberOfComments(currentElement, neighbour);
+		Integer minComments = getMaxNumberOfComments(currentElement, neighbour, datapath);
 		
 		return(minComments>comments);
 	}
-	public ArrayList<Integer> getUsersConnected(Integer personId)
+	public boolean isEnoughCommentsHybrid(Integer currentElement, Integer neighbour, Integer comments, String datapath)
 	{
-		String persons = getPersonKnowsPerson(personId);
+		Integer minComments = getMaxNumberOfCommentsHybrid(currentElement, neighbour, datapath);
+		
+		return(minComments>comments);
+	}
+	
+	public ArrayList<Integer> getUsersConnected(Integer personId, String datapath)
+	{
+		String persons = getPersonKnowsPerson(personId, datapath);
 		if(persons==null)
 		{
 			return new ArrayList<Integer>();
@@ -470,133 +634,132 @@ public class MapDBIndexer {
 		return personsConnected; 
 		
 	}
-	public static void indexPersonKnowsPerson(String[] args) throws IOException {
-		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-				+ "and Implementation/project topics/social_networks/big_data_files/";
-		String fileName = "person_knows_person.csv"; //"comment_replyOf_comment_no_header.csv";
-
-		FileReader fileReader = new FileReader(new File(filePath + fileName));
-
-		LineNumberReader lnr = new LineNumberReader(fileReader);
-
-		lnr.skip(Long.MAX_VALUE);
-		final Integer max = lnr.getLineNumber();
-		// Finally, the LineNumberReader object should be closed to prevent
-		// resource leak
-		lnr.close();
-		final FileReader fileReader2 = new FileReader(new File(filePath
-				+ fileName));
-		final BufferedReader br = new BufferedReader(fileReader2);
-
-		
-		
-		/**
-		 * Open database in temporary directory
-		 */
-		File dbFile = new File(
-				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-						+ "and Implementation/project topics/social_networks/sorted_files/mapdb_person_knows_person.index");
-		DB db = DBMaker.newFileDB(dbFile)
-		/** disabling Write Ahead Log makes import much faster */
-		.transactionDisable().make();
-
-		// db.get(name)
-
-		long time = System.currentTimeMillis();
-
-		/**
-		 * Source of data which randomly generates strings. In real world this
-		 * would return data from file.
-		 */
-		Iterator<Fun.Tuple2<Integer,String>> source = new Iterator<Fun.Tuple2<Integer,String>>(){
-			long counter = 0;
-			@Override
-			public boolean hasNext() {
-				// TODO Auto-generated method stub
-				return counter < max-1;
-			}
-
-			@Override
-			public Tuple2<Integer, String> next() {
-				counter++;
-				Integer personId1=0; 
-				String personId2=""; 
-				try {
-					//ignores the header 
-					if(counter==1)
-					{
-						br.readLine(); 
-					}
-//					if(counter%100==0)
+//	public static void indexPersonKnowsPerson(String[] args) throws IOException {
+//		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+//				+ "and Implementation/project topics/social_networks/big_data_files/";
+//		String fileName = "person_knows_person.csv"; //"comment_replyOf_comment_no_header.csv";
+//
+//		FileReader fileReader = new FileReader(new File(filePath + fileName));
+//
+//		LineNumberReader lnr = new LineNumberReader(fileReader);
+//
+//		lnr.skip(Long.MAX_VALUE);
+//		final Integer max = lnr.getLineNumber();
+//		// Finally, the LineNumberReader object should be closed to prevent
+//		// resource leak
+//		lnr.close();
+//		final FileReader fileReader2 = new FileReader(new File(filePath
+//				+ fileName));
+//		final BufferedReader br = new BufferedReader(fileReader2);
+//
+//		
+//		
+//		/**
+//		 * Open database in temporary directory
+//		 */
+//		File dbFile = new File(
+//				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+//						+ "and Implementation/project topics/social_networks/sorted_files/mapdb_person_knows_person.index");
+//		DB db = DBMaker.newFileDB(dbFile)
+//		/** disabling Write Ahead Log makes import much faster */
+//		.transactionDisable().make();
+//
+//		// db.get(name)
+//
+//		long time = System.currentTimeMillis();
+//
+//		/**
+//		 * Source of data which randomly generates strings. In real world this
+//		 * would return data from file.
+//		 */
+//		Iterator<Fun.Tuple2<Integer,String>> source = new Iterator<Fun.Tuple2<Integer,String>>(){
+//			long counter = 0;
+//			@Override
+//			public boolean hasNext() {
+//				// TODO Auto-generated method stub
+//				return counter < max-1;
+//			}
+//
+//			@Override
+//			public Tuple2<Integer, String> next() {
+//				counter++;
+//				Integer personId1=0; 
+//				String personId2=""; 
+//				try {
+//					//ignores the header 
+//					if(counter==1)
 //					{
-//						System.out.println(counter);
+//						br.readLine(); 
 //					}
-					String line = br.readLine();
-					StringTokenizer st = new StringTokenizer(line, "|");
-					personId1 = Integer.valueOf(st.nextToken());
-
-					personId2 = st.nextToken();
-					if(personId1.equals(858) && personId2.equals(9848))
-					{
-						System.out.println("here we go");
-					}
-
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
-				Fun.Tuple2<Integer, String> valueToReturn = new Fun.Tuple2<Integer, String>(personId1, personId2);
-				return valueToReturn;
-				// return randomString(10);				
-			}
-
-			@Override
-			public void remove() {
-				// TODO Auto-generated method stub
-				
-			}
-			
-		};
-
-		source = Pump.sort(source, true, 100000,
-				Collections.reverseOrder(BTreeMap.COMPARABLE_COMPARATOR), // reverse
-																			// order
-																			// comparator
-				db.getDefaultSerializer());
-
-		int counter = 0; 
-
-		System.out.println ("counter: " + counter);
-		
-		
-		BTreeKeySerializer keySerializer = BTreeKeySerializer.BASIC ; //BTreeKeySerializer.STRING;
-
-
-
-		System.out.println("Sorting time: "
-				+ (System.currentTimeMillis() - time) / 1000); 
-		/**
-		 * Create BTreeMap and fill it with data
-		 * 
-		 * TODO: for reverse order, override the compareTo method of Integer to behave the other way around
-		 */
+////					if(counter%100==0)
+////					{
+////						System.out.println(counter);
+////					}
+//					String line = br.readLine();
+//					StringTokenizer st = new StringTokenizer(line, "|");
+//					personId1 = Integer.valueOf(st.nextToken());
+//
+//					personId2 = st.nextToken();
+//					if(personId1.equals(858) && personId2.equals(9848))
+//					{
+//						System.out.println("here we go");
+//					}
+//
+//				} catch (Exception ex) {
+//					ex.printStackTrace();
+//				}
+//				Fun.Tuple2<Integer, String> valueToReturn = new Fun.Tuple2<Integer, String>(personId1, personId2);
+//				return valueToReturn;
+//				// return randomString(10);				
+//			}
+//
+//			@Override
+//			public void remove() {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//			
+//		};
+//
+//		source = Pump.sort(source, true, 100000,
+//				Collections.reverseOrder(BTreeMap.COMPARABLE_COMPARATOR), // reverse
+//																			// order
+//																			// comparator
+//				db.getDefaultSerializer());
+//
+//		int counter = 0; 
+//
+//		System.out.println ("counter: " + counter);
+//		
+//		
+//		BTreeKeySerializer keySerializer = BTreeKeySerializer.BASIC ; //BTreeKeySerializer.STRING;
+//
+//
+//
+//		System.out.println("Sorting time: "
+//				+ (System.currentTimeMillis() - time) / 1000); 
+//		/**
+//		 * Create BTreeMap and fill it with data
+//		 * 
+//		 * TODO: for reverse order, override the compareTo method of Integer to behave the other way around
+//		 */
+////		Map<String, Integer> map = db.createTreeMap("map")
+////				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.INTEGER)
+////				.make();
+//		
 //		Map<String, Integer> map = db.createTreeMap("map")
-//				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.INTEGER)
-//				.make();
-		
-		Map<String, Integer> map = db.createTreeMap("map")
-				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.STRING)
-				.pumpIgnoreDuplicates()
-				.makeAdapt2();
-		
-		System.out.println("Finished; total time to index person_knows_person: "
-				+ (System.currentTimeMillis() - time) / 1000 + "s; there are "
-				+ map.size() + " items in map");
-		db.close();	
-	}	
+//				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.STRING)
+//				.pumpIgnoreDuplicates()
+//				.makeAdapt2();
+//		
+//		System.out.println("Finished; total time to index person_knows_person: "
+//				+ (System.currentTimeMillis() - time) / 1000 + "s; there are "
+//				+ map.size() + " items in map");
+//		db.close();	
+//	}	
 	
-	public static void indexCommentReplyOfComment(String[] args) throws IOException {
-		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-				+ "and Implementation/project topics/social_networks/big_data_files/";
+	public static void indexCommentReplyOfComment(String path) throws IOException {
+		String filePath = path + "/";
 		String fileName = "comment_replyOf_comment_reverse.csv"; //"comment_replyOf_comment_no_header.csv";
 
 		FileReader fileReader = new FileReader(new File(filePath + fileName));
@@ -616,8 +779,7 @@ public class MapDBIndexer {
 		 * Open database in temporary directory
 		 */
 		File dbFile = new File(
-				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-						+ "and Implementation/project topics/social_networks/sorted_files/mapdb_comm_rof_comm.index");
+				filePath + "sorted_files/mapdb_comm_rof_comm.index");
 		DB db = DBMaker.newFileDB(dbFile)
 		/** disabling Write Ahead Log makes import much faster */
 		.transactionDisable().make();
@@ -691,14 +853,14 @@ public class MapDBIndexer {
 				+ map.size() + " items in map");
 		db.close();	
 	}
-	public static void indexCommentHasCreatorPerson(String[] args) throws IOException {
+	public static void indexCommentHasCreatorPerson(String path) throws IOException {
 
 
-		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-				+ "and Implementation/project topics/social_networks/sorted_files/";
-		String fileName = "comment_hasCreator_person_sf2.csv";
+		String filePath = path;
+		String fileName = "comment_hasCreator_person.csv";
 
-		FileReader fileReader = new FileReader(new File(filePath + fileName));
+		String pathToFile = filePath + "/" + fileName;
+		FileReader fileReader = new FileReader(new File(pathToFile));
 
 		LineNumberReader lnr = new LineNumberReader(fileReader);
 
@@ -707,8 +869,7 @@ public class MapDBIndexer {
 		// Finally, the LineNumberReader object should be closed to prevent
 		// resource leak
 		lnr.close();
-		final FileReader fileReader2 = new FileReader(new File(filePath
-				+ fileName));
+		final FileReader fileReader2 = new FileReader(new File(pathToFile));
 		final BufferedReader br = new BufferedReader(fileReader2);
 
 		/** max number of elements to import */
@@ -718,8 +879,7 @@ public class MapDBIndexer {
 		 * Open database in temporary directory
 		 */
 		File dbFile = new File(
-				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-						+ "and Implementation/project topics/social_networks/sorted_files/mapdb.index");
+				path + "/sorted_files/mapdb.index");
 		DB db = DBMaker.newFileDB(dbFile)
 		/** disabling Write Ahead Log makes import much faster */
 		.transactionDisable().make();
@@ -737,7 +897,7 @@ public class MapDBIndexer {
 			@Override
 			public boolean hasNext() {
 				// TODO Auto-generated method stub
-				return counter < max;
+				return counter+1 < max;
 			}
 
 			@Override
@@ -747,6 +907,10 @@ public class MapDBIndexer {
 				Integer personId=0; 
 				try {
 					String line = br.readLine();
+					if(counter==1)
+					{
+						line = br.readLine();
+					}
 					StringTokenizer st = new StringTokenizer(line, "|");
 					commentId = st.nextToken().toString();
 					personId = Integer.valueOf(st.nextToken());
@@ -879,7 +1043,9 @@ public class MapDBIndexer {
 //		Index();
 //		buildIndexFinalFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
 //				+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv");
-		
+		//Index();
+//		buildIndexFinalFile("/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
+//		+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv"); 
 	}
     public static String randomString(int size) {
         String chars = "0123456789abcdefghijklmnopqrstuvwxyz !@#$%^&*()_+=-{}[]:\",./<>?|\\";

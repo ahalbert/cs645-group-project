@@ -163,14 +163,14 @@ public class ExecuterQuery1 {
 	
 	
 	//first version: breadth first search
-	public void findPathWithIndexBTree(Integer userFrom, Integer userTo, Integer comments)
-	{
-		MapDBIndexer mapDbIndexer = new MapDBIndexer(); 
-//		LuceneIndexer luceneIndexer = new LuceneIndexer(); 
-//		loaderQuery1.doIndexPreload("/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
-//				+ "Design and Implementation/project topics/social_networks/big_data_files");
+	public void findPathWithIndexBTree(Integer userFrom, Integer userTo, Integer comments, 
+			String datapath) throws Exception
+	{ 
+		MapDBIndexer mapDbIndexer = new MapDBIndexer();
 		
+		mapDbIndexer.Index(datapath);
 		
+		int neighboursProcessed = 0; 
 		LinkedList<Integer> queue = new LinkedList<Integer>(); 
 		queue.add(userFrom);
 		
@@ -183,7 +183,7 @@ public class ExecuterQuery1 {
 		while(queue.size()>0 && !(currentElement=queue.poll()).equals(userTo))
 		{
 			Path currentPath = distance.get(currentElement);
-			ArrayList<Integer> neighbours = mapDbIndexer.getUsersConnected(currentElement);
+			ArrayList<Integer> neighbours = mapDbIndexer.getUsersConnected(currentElement, datapath);
 			
 			if(neighbours!=null)
 			{
@@ -194,7 +194,13 @@ public class ExecuterQuery1 {
 //					Boolean isEnoughComments = luceneIndexer.isEnoughComments(currentElement, neighbour, comments, IndexedLoaderQuery1.indexCommentsPath);
 					if(neighbourDistance==null/*&&isEnoughComments*/)
 					{
-						Boolean isEnoughComments = mapDbIndexer.isEnoughComments(currentElement, neighbour, comments);
+						Boolean isEnoughComments = mapDbIndexer.isEnoughComments(currentElement, neighbour, comments, datapath);
+						neighboursProcessed++; 
+						if(neighboursProcessed%100==0)
+						{
+							System.out.println("Neighbours processed: " + neighboursProcessed);
+						}
+						
 						if(isEnoughComments)
 						{
 							distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
@@ -229,7 +235,80 @@ public class ExecuterQuery1 {
 		
 	}	
 	
-	public static void main(String [] args)
+	
+	//first version: breadth first search
+	public void findPathWithIndexBTreeHybrid(Integer userFrom, Integer userTo, Integer comments, 
+			String datapath) throws Exception
+	{ 
+		MapDBIndexer mapDbIndexer = new MapDBIndexer();
+		
+		mapDbIndexer.HybridIndex(datapath);
+		int neighboursProcessed = 0; 
+		
+		LinkedList<Integer> queue = new LinkedList<Integer>(); 
+		queue.add(userFrom);
+		
+		HashMap<Integer,Path> distance = new HashMap<Integer,Path>();
+		Path path = new Path(0,null);
+		distance.put(userFrom, path);
+		Integer currentElement=null;
+		Integer previousElement=null;
+		Integer previousDist=0;
+		while(queue.size()>0 && !(currentElement=queue.poll()).equals(userTo))
+		{
+			Path currentPath = distance.get(currentElement);
+			ArrayList<Integer> neighbours = mapDbIndexer.getUsersConnected(currentElement, datapath);
+			
+			if(neighbours!=null)
+			{
+				
+				for(Integer neighbour:neighbours)
+				{
+					Path neighbourDistance = distance.get(neighbour);
+//					Boolean isEnoughComments = luceneIndexer.isEnoughComments(currentElement, neighbour, comments, IndexedLoaderQuery1.indexCommentsPath);
+					if(neighbourDistance==null/*&&isEnoughComments*/)
+					{
+						Boolean isEnoughComments = mapDbIndexer.isEnoughCommentsHybrid(currentElement, neighbour, comments, datapath);
+						neighboursProcessed++; 
+						if(neighboursProcessed%100==0)
+						{
+							System.out.println("Neighbours processed: " + neighboursProcessed);
+						}
+						if(isEnoughComments)
+						{
+							distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
+							queue.add(neighbour);
+						}
+					}
+					else
+					{
+						//System.out.println("distance not null");
+					}
+				}
+				
+				previousElement=currentElement;
+			}
+
+		}
+		Path parent = null;
+		if(!currentElement.equals(userTo))
+		{
+			System.out.println("Path not found");
+		}
+		else
+		{
+			System.out.println(currentElement);
+			while((parent=distance.get(currentElement)).getParent()!=null)
+			{
+				currentElement=parent.getParent(); 
+				System.out.println(currentElement);
+			}
+		}
+		System.out.println("The end 2a");
+		
+	}		
+	
+	public static void main(String [] args) throws Exception
 	{
 		
 		ExecuterQuery1 executerQuery1 = new ExecuterQuery1(); 
@@ -239,7 +318,13 @@ public class ExecuterQuery1 {
 		long time = System.currentTimeMillis();
 		//executerQuery1.findPathWithIndexBTree(858, 58700, 1);
 		//executerQuery1.findPath(858, 58700, 1);91851
-		executerQuery1.findPathWithIndex(858, 587, 1);
+		executerQuery1.findPathWithIndexBTree(858, 587, 1, 
+				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
+				+ "Design and Implementation/project topics/social_networks/data_files");
+//		executerQuery1.findPathWithIndexBTreeHybrid(858, 587, 1, 
+//				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
+//				+ "Design and Implementation/project topics/social_networks/data_files");
+
 		System.out.println(System.currentTimeMillis()-time);
 		System.out.println("The end 2");
 	}
