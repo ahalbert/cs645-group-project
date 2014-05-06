@@ -167,10 +167,14 @@ public class ExecuterQuery1 {
 			String datapath) throws Exception
 	{ 
 		MapDBIndexer mapDbIndexer = new MapDBIndexer();
-		
+		long timeLoad = System.currentTimeMillis();
 		mapDbIndexer.Index(datapath);
+		System.out.println("total time to load: " + (System.currentTimeMillis()-timeLoad));
 		
-		int neighboursProcessed = 0; 
+		
+		long timeSearch = 0; 
+		timeSearch = System.currentTimeMillis(); 
+//		int neighboursProcessed = 0; 
 		LinkedList<Integer> queue = new LinkedList<Integer>(); 
 		queue.add(userFrom);
 		
@@ -195,11 +199,11 @@ public class ExecuterQuery1 {
 					if(neighbourDistance==null/*&&isEnoughComments*/)
 					{
 						Boolean isEnoughComments = mapDbIndexer.isEnoughComments(currentElement, neighbour, comments, datapath);
-						neighboursProcessed++; 
-						if(neighboursProcessed%100==0)
-						{
-							System.out.println("Neighbours processed: " + neighboursProcessed);
-						}
+//						neighboursProcessed++; 
+//						if(neighboursProcessed%100==0)
+//						{
+//							System.out.println("Neighbours processed: " + neighboursProcessed);
+//						}
 						
 						if(isEnoughComments)
 						{
@@ -231,8 +235,9 @@ public class ExecuterQuery1 {
 				System.out.println(currentElement);
 			}
 		}
-		System.out.println("The end 2a");
 		
+		long timeRes = (System.currentTimeMillis() - timeSearch);
+		System.out.println("Total time to search: " + timeRes);
 	}	
 	
 	
@@ -241,9 +246,14 @@ public class ExecuterQuery1 {
 			String datapath) throws Exception
 	{ 
 		MapDBIndexer mapDbIndexer = new MapDBIndexer();
+		long timeLoad = System.currentTimeMillis();
+		
 		
 		mapDbIndexer.HybridIndex(datapath);
-		int neighboursProcessed = 0; 
+		System.out.println("total time to load: " + (System.currentTimeMillis()-timeLoad));
+		long timeSearch = 0; 
+		timeSearch = System.currentTimeMillis(); 
+//		int neighboursProcessed = 0; 
 		
 		LinkedList<Integer> queue = new LinkedList<Integer>(); 
 		queue.add(userFrom);
@@ -269,11 +279,11 @@ public class ExecuterQuery1 {
 					if(neighbourDistance==null/*&&isEnoughComments*/)
 					{
 						Boolean isEnoughComments = mapDbIndexer.isEnoughCommentsHybrid(currentElement, neighbour, comments, datapath);
-						neighboursProcessed++; 
-						if(neighboursProcessed%100==0)
-						{
-							System.out.println("Neighbours processed: " + neighboursProcessed);
-						}
+//						neighboursProcessed++; 
+//						if(neighboursProcessed%100==0)
+//						{
+//							System.out.println("Neighbours processed: " + neighboursProcessed);
+//						}
 						if(isEnoughComments)
 						{
 							distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
@@ -304,7 +314,7 @@ public class ExecuterQuery1 {
 				System.out.println(currentElement);
 			}
 		}
-		System.out.println("The end 2a");
+		System.out.println("Total time to search: " + (System.currentTimeMillis()-timeSearch));
 		
 	}		
 	
@@ -318,9 +328,9 @@ public class ExecuterQuery1 {
 		long time = System.currentTimeMillis();
 		//executerQuery1.findPathWithIndexBTree(858, 58700, 1);
 		//executerQuery1.findPath(858, 58700, 1);91851
-		executerQuery1.findPathWithIndexBTree(858, 587, 1, 
+		executerQuery1.findPathWithIndexBTreeHybrid(858, 587, 1, 
 				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
-				+ "Design and Implementation/project topics/social_networks/data_files");
+				+ "Design and Implementation/project topics/social_networks/big_data_files");
 //		executerQuery1.findPathWithIndexBTreeHybrid(858, 587, 1, 
 //				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
 //				+ "Design and Implementation/project topics/social_networks/data_files");

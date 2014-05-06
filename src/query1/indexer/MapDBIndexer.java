@@ -68,6 +68,7 @@ public class MapDBIndexer {
 		long time2 = System.currentTimeMillis(); 
 		
 		indexCommentReplyOfComment(datapath);
+		indexPersonKnowsPerson(datapath); 
 		
 		System.out.println("New index generation: " + (System.currentTimeMillis()-time2));
 		//step 1: sort the file person_knows_person by person1: already grouped, so this method doesn't sort so far 
@@ -149,6 +150,8 @@ public class MapDBIndexer {
 		}
 		indexCommentHasCreatorPerson(datapath ); 
 		indexCommentReplyOfComment(datapath);
+		indexPersonKnowsPerson(datapath); 
+		
 		System.out.println("Final indexing time: "
 				+ (System.currentTimeMillis() - time) / 1000 + " sec"); 
 //		//step 1: sort the file person_knows_person by person1: already grouped, so this method doesn't sort so far 
@@ -634,133 +637,131 @@ public class MapDBIndexer {
 		return personsConnected; 
 		
 	}
-//	public static void indexPersonKnowsPerson(String[] args) throws IOException {
-//		String filePath = "/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-//				+ "and Implementation/project topics/social_networks/big_data_files/";
-//		String fileName = "person_knows_person.csv"; //"comment_replyOf_comment_no_header.csv";
-//
-//		FileReader fileReader = new FileReader(new File(filePath + fileName));
-//
-//		LineNumberReader lnr = new LineNumberReader(fileReader);
-//
-//		lnr.skip(Long.MAX_VALUE);
-//		final Integer max = lnr.getLineNumber();
-//		// Finally, the LineNumberReader object should be closed to prevent
-//		// resource leak
-//		lnr.close();
-//		final FileReader fileReader2 = new FileReader(new File(filePath
-//				+ fileName));
-//		final BufferedReader br = new BufferedReader(fileReader2);
-//
-//		
-//		
-//		/**
-//		 * Open database in temporary directory
-//		 */
-//		File dbFile = new File(
-//				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-//						+ "and Implementation/project topics/social_networks/sorted_files/mapdb_person_knows_person.index");
-//		DB db = DBMaker.newFileDB(dbFile)
-//		/** disabling Write Ahead Log makes import much faster */
-//		.transactionDisable().make();
-//
-//		// db.get(name)
-//
-//		long time = System.currentTimeMillis();
-//
-//		/**
-//		 * Source of data which randomly generates strings. In real world this
-//		 * would return data from file.
-//		 */
-//		Iterator<Fun.Tuple2<Integer,String>> source = new Iterator<Fun.Tuple2<Integer,String>>(){
-//			long counter = 0;
-//			@Override
-//			public boolean hasNext() {
-//				// TODO Auto-generated method stub
-//				return counter < max-1;
-//			}
-//
-//			@Override
-//			public Tuple2<Integer, String> next() {
-//				counter++;
-//				Integer personId1=0; 
-//				String personId2=""; 
-//				try {
-//					//ignores the header 
-//					if(counter==1)
+	public static void indexPersonKnowsPerson(String path) throws IOException {
+		String filePath = path + "/";
+		String fileName = "person_knows_person.csv"; //"comment_replyOf_comment_no_header.csv";
+
+		FileReader fileReader = new FileReader(new File(filePath + fileName));
+
+		LineNumberReader lnr = new LineNumberReader(fileReader);
+
+		lnr.skip(Long.MAX_VALUE);
+		final Integer max = lnr.getLineNumber();
+		// Finally, the LineNumberReader object should be closed to prevent
+		// resource leak
+		lnr.close();
+		final FileReader fileReader2 = new FileReader(new File(filePath
+				+ fileName));
+		final BufferedReader br = new BufferedReader(fileReader2);
+
+		
+		
+		/**
+		 * Open database in temporary directory
+		 */
+		File dbFile = new File(
+				path + "/sorted_files/mapdb_person_knows_person.index");
+		DB db = DBMaker.newFileDB(dbFile)
+		/** disabling Write Ahead Log makes import much faster */
+		.transactionDisable().make();
+
+		// db.get(name)
+
+		long time = System.currentTimeMillis();
+
+		/**
+		 * Source of data which randomly generates strings. In real world this
+		 * would return data from file.
+		 */
+		Iterator<Fun.Tuple2<Integer,String>> source = new Iterator<Fun.Tuple2<Integer,String>>(){
+			long counter = 0;
+			@Override
+			public boolean hasNext() {
+				// TODO Auto-generated method stub
+				return counter < max-1;
+			}
+
+			@Override
+			public Tuple2<Integer, String> next() {
+				counter++;
+				Integer personId1=0; 
+				String personId2=""; 
+				try {
+					//ignores the header 
+					if(counter==1)
+					{
+						br.readLine(); 
+					}
+//					if(counter%100==0)
 //					{
-//						br.readLine(); 
+//						System.out.println(counter);
 //					}
-////					if(counter%100==0)
-////					{
-////						System.out.println(counter);
-////					}
-//					String line = br.readLine();
-//					StringTokenizer st = new StringTokenizer(line, "|");
-//					personId1 = Integer.valueOf(st.nextToken());
-//
-//					personId2 = st.nextToken();
-//					if(personId1.equals(858) && personId2.equals(9848))
-//					{
-//						System.out.println("here we go");
-//					}
-//
-//				} catch (Exception ex) {
-//					ex.printStackTrace();
-//				}
-//				Fun.Tuple2<Integer, String> valueToReturn = new Fun.Tuple2<Integer, String>(personId1, personId2);
-//				return valueToReturn;
-//				// return randomString(10);				
-//			}
-//
-//			@Override
-//			public void remove() {
-//				// TODO Auto-generated method stub
-//				
-//			}
-//			
-//		};
-//
-//		source = Pump.sort(source, true, 100000,
-//				Collections.reverseOrder(BTreeMap.COMPARABLE_COMPARATOR), // reverse
-//																			// order
-//																			// comparator
-//				db.getDefaultSerializer());
-//
-//		int counter = 0; 
-//
-//		System.out.println ("counter: " + counter);
-//		
-//		
-//		BTreeKeySerializer keySerializer = BTreeKeySerializer.BASIC ; //BTreeKeySerializer.STRING;
-//
-//
-//
-//		System.out.println("Sorting time: "
-//				+ (System.currentTimeMillis() - time) / 1000); 
-//		/**
-//		 * Create BTreeMap and fill it with data
-//		 * 
-//		 * TODO: for reverse order, override the compareTo method of Integer to behave the other way around
-//		 */
-////		Map<String, Integer> map = db.createTreeMap("map")
-////				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.INTEGER)
-////				.make();
-//		
+					String line = br.readLine();
+					StringTokenizer st = new StringTokenizer(line, "|");
+					personId1 = Integer.valueOf(st.nextToken());
+
+					personId2 = st.nextToken();
+					if(personId1.equals(858) && personId2.equals(9848))
+					{
+						System.out.println("here we go");
+					}
+
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				Fun.Tuple2<Integer, String> valueToReturn = new Fun.Tuple2<Integer, String>(personId1, personId2);
+				return valueToReturn;
+				// return randomString(10);				
+			}
+
+			@Override
+			public void remove() {
+				// TODO Auto-generated method stub
+				
+			}
+			
+		};
+
+		source = Pump.sort(source, true, 100000,
+				Collections.reverseOrder(BTreeMap.COMPARABLE_COMPARATOR), // reverse
+																			// order
+																			// comparator
+				db.getDefaultSerializer());
+
+		int counter = 0; 
+
+		System.out.println ("counter: " + counter);
+		
+		
+		BTreeKeySerializer keySerializer = BTreeKeySerializer.BASIC ; //BTreeKeySerializer.STRING;
+
+
+
+		System.out.println("Sorting time: "
+				+ (System.currentTimeMillis() - time) / 1000); 
+		/**
+		 * Create BTreeMap and fill it with data
+		 * 
+		 * TODO: for reverse order, override the compareTo method of Integer to behave the other way around
+		 */
 //		Map<String, Integer> map = db.createTreeMap("map")
-//				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.STRING)
-//				.pumpIgnoreDuplicates()
-//				.makeAdapt2();
-//		
-//		System.out.println("Finished; total time to index person_knows_person: "
-//				+ (System.currentTimeMillis() - time) / 1000 + "s; there are "
-//				+ map.size() + " items in map");
-//		db.close();	
-//	}	
+//				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.INTEGER)
+//				.make();
+		
+		Map<String, Integer> map = db.createTreeMap("map")
+				.pumpSource(source).keySerializer(keySerializer).valueSerializer(Serializer.STRING)
+				.pumpIgnoreDuplicates()
+				.makeAdapt2();
+		
+		System.out.println("Finished; total time to index person_knows_person: "
+				+ (System.currentTimeMillis() - time) / 1000 + "s; there are "
+				+ map.size() + " items in map");
+		db.close();	
+	}	
 	
 	public static void indexCommentReplyOfComment(String path) throws IOException {
 		String filePath = path + "/";
-		String fileName = "comment_replyOf_comment_reverse.csv"; //"comment_replyOf_comment_no_header.csv";
+		String fileName = "comment_replyOf_comment.csv"; //"comment_replyOf_comment_no_header.csv";
 
 		FileReader fileReader = new FileReader(new File(filePath + fileName));
 
@@ -797,7 +798,7 @@ public class MapDBIndexer {
 			@Override
 			public boolean hasNext() {
 				// TODO Auto-generated method stub
-				return counter < max;
+				return (counter + 1) < max;
 			}
 
 			@Override
@@ -807,6 +808,10 @@ public class MapDBIndexer {
 				Integer commentId2=0; 
 				try {
 					String line = br.readLine();
+					if(counter==1)
+					{
+						line = br.readLine(); 
+					}
 					StringTokenizer st = new StringTokenizer(line, "|");
 					commentId1 = Integer.valueOf(st.nextToken());
 					commentId2 = Integer.valueOf(st.nextToken());
@@ -831,7 +836,11 @@ public class MapDBIndexer {
 		int counter = 0; 
 
 		System.out.println ("counter: " + counter);
-		
+		source = Pump.sort(source, true, 100000,
+				Collections.reverseOrder(BTreeMap.COMPARABLE_COMPARATOR), // reverse
+																			// order
+																			// comparator
+				db.getDefaultSerializer());
 		
 		BTreeKeySerializer keySerializer = BTreeKeySerializer.BASIC ; //BTreeKeySerializer.STRING;
 
