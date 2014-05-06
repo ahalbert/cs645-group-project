@@ -23,41 +23,19 @@ public class query2 {
     private TreeMap<String, Integer> Btreeindex = new TreeMap<String, Integer>();
     private String indexType;
 	
-	public query2(String mode) {
+	public query2(String mode, String fileloc) {
 	    indexType = mode;
         if(mode.compareTo("hash") == 0)
-            hashIndex();
+           hashIndex(fileloc);
         if(mode.compareTo("tree") == 0)
-            treeIndex();
+            treeIndex(fileloc);
 	}
 
-	public void queries() {
-	    try {
-            BufferedReader file = new BufferedReader(new FileReader("./data/data.txt"));
-            String s;
-            Calendar c = Calendar.getInstance();
-            while (( s = file.readLine() ) != null)  {
-                //parse strings
-                s = s.substring(7, s.length()-1);
-                s = s.replaceAll("\\s","");
-                String[] values = s.split(",");
-                int k = new Integer(values[0]);
-                String[] dates = values[1].split("-");
-                c.set(new Integer(dates[0]), new Integer(dates[1]), new Integer( dates[2] ));
-
-                eval(k,c); 
-                people = new TreeMap<String, Person>(); //Used to fix a bug where people would be loaded multiple times.
-            }
-
-            file.close();
-        } catch (IOException e) { e.printStackTrace(); }
-	}
-
-	public void sortFile() {
+	public void sortFile(String fileloc) {
         TreeMap<String, ArrayList<String>> bdates = new TreeMap<String, ArrayList<String>>();
 
         try {
-            BufferedReader file = new BufferedReader(new FileReader("data/person.csv"));
+            BufferedReader file = new BufferedReader(new FileReader(fileloc+"person.csv"));
             String s;
 	        while (( s = file.readLine() ) != null)  {
 	            if (s.compareTo("id|firstName|lastName|gender|birthday|creationDate|locationIP|browserUsed") != 0) {
@@ -71,7 +49,7 @@ public class query2 {
                 }
 	        }
             file.close();
-            BufferedWriter wfile = new BufferedWriter(new FileWriter("data/person.csv"));
+            BufferedWriter wfile = new BufferedWriter(new FileWriter(fileloc+"person.csv"));
             Iterator it = bdates.descendingMap().entrySet().iterator();
             while(it.hasNext()) {
                 Map.Entry<String, ArrayList<String>> kvpair = (Map.Entry<String, ArrayList<String>>)it.next();
@@ -83,11 +61,11 @@ public class query2 {
         } catch(Exception e) {}
 	}
 	
-	public ArrayList<String> eval(int k, Calendar d) {
+	public ArrayList<String> eval(int k, Calendar d, String fileloc) {
 	    map = new HashMap<String,Integer>();
 	    ValueComparator c = new ValueComparator(map);
         interestSize = new TreeMap<String, Integer>(c);
-	    loadPeople(d);
+	    loadPeople(d, fileloc);
         
         TreeMap<Integer, ArrayList<String>> tags = new TreeMap<Integer, ArrayList<String>>();
 
@@ -104,7 +82,7 @@ public class query2 {
             if (tags.get(tagsize) == null)
                 tags.put(tagsize, new ArrayList<String>());
             ArrayList<String> al = tags.get(tagsize);
-            insertIntoArrayList(al, lookupTagDef(kvpair.getKey()));
+            insertIntoArrayList(al, lookupTagDef(kvpair.getKey(), fileloc));
         }
 
         ArrayList<String> ret = new ArrayList<String>();
@@ -239,9 +217,9 @@ public class query2 {
         return friends;
     }
 
-    private String lookupTagDef(String tag) {
+    private String lookupTagDef(String tag, String fileloc) {
         try {
-            BufferedReader file = new BufferedReader(new FileReader("./data/tag.csv"));
+            BufferedReader file = new BufferedReader(new FileReader(fileloc+"tag.csv"));
             file.readLine();
             String s;
             while (( s = file.readLine() ) != null)  {
@@ -263,11 +241,11 @@ public class query2 {
      *
      * */
     
-	private void loadPeople(Calendar d) {
+	private void loadPeople(Calendar d, String fileloc) {
 	    //Assumes file is sorted.
         people = new TreeMap<String, Person>();
 	    try {
-            BufferedReader file = new BufferedReader(new FileReader("data/person.csv"));
+            BufferedReader file = new BufferedReader(new FileReader(fileloc+"person.csv"));
             String s;
             String[] values;
 
@@ -289,7 +267,7 @@ public class query2 {
 	    } catch(IOException e) { e.printStackTrace(); }
 
 	    try {
-            BufferedReader file = new BufferedReader(new FileReader("./data/person_hasInterest_tag.csv"));
+            BufferedReader file = new BufferedReader(new FileReader(fileloc+"person_hasInterest_tag.csv"));
             String s;
             file.readLine();
 
@@ -317,7 +295,7 @@ public class query2 {
 	    } catch(IOException e) { e.printStackTrace(); }
 
 	    try {
-            BufferedReader file = new BufferedReader(new FileReader("./data/person_knows_person.csv"));
+            BufferedReader file = new BufferedReader(new FileReader(fileloc+"person_knows_person.csv"));
             String s;
             file.readLine();
             while((s = file.readLine()) != null) {
@@ -330,10 +308,10 @@ public class query2 {
 	    } catch(IOException e) { e.printStackTrace(); }
 	} 
 
-    private void treeIndex() {
+    private void treeIndex(String fileloc) {
         String s;
         try {
-            BufferedReader file = new BufferedReader(new FileReader("./data/person_hasInterest_tag.csv"));
+            BufferedReader file = new BufferedReader(new FileReader(fileloc+"person_hasInterest_tag.csv"));
             file.readLine();
             int lineCount = 1;
             String oldPerson = "";
@@ -351,10 +329,10 @@ public class query2 {
         }
     }
 
-    private void  hashIndex() {
+    private void  hashIndex(String fileloc) {
         String s;
         try {
-            BufferedReader file = new BufferedReader(new FileReader("./data/person_hasInterest_tag.csv"));
+            BufferedReader file = new BufferedReader(new FileReader(fileloc+"person_hasInterest_tag.csv"));
             file.readLine();
             int lineCount = 1;
             String oldPerson = "";

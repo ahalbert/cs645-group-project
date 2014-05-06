@@ -7,11 +7,13 @@ import java.util.Calendar;
 
 public class Dispatcher {
     public static void main (String[] args) {
-        query2 q2 = new query2("");
-        q2.sortFile();
+        String fileloc = args[0];
+        String queryloc = args[1];
+        query2 q2 = new query2("",fileloc);
+        q2.sortFile(fileloc);
         Calendar c = Calendar.getInstance();
         try {
-            BufferedReader file = new BufferedReader(new FileReader("./data/queries.txt"));
+            BufferedReader file = new BufferedReader(new FileReader(queryloc));
             String s;
             while (( s = file.readLine() ) != null) {
                 String type =  s.substring(0, 6);
@@ -27,7 +29,7 @@ public class Dispatcher {
                     String[] dates = values[1].split("-");
                     c.set(new Integer(dates[0]), new Integer(dates[1]), new Integer( dates[2] ));
 
-                    q2.eval(k,c); 
+                    q2.eval(k,c, fileloc); 
                 }
                 if (type.compareTo("query3") == 0) {}
                 if (type.compareTo("query4") == 0) {}
