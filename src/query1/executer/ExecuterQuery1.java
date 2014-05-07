@@ -401,6 +401,8 @@ public class ExecuterQuery1 {
 		long time = System.currentTimeMillis();
 		//executerQuery1.findPathWithIndexBTree(858, 58700, 1);
 		//executerQuery1.findPath(858, 58700, 1);91851
+//		executerQuery1.findPathV2(858, 587, 1, 
+//				"/Users/klimzaporojets/klim/umass/CMPSCI645/project_topics/social_networks/big_data_files");
 		executerQuery1.findPathV2(858, 587, 1, 
 				"/Users/klimzaporojets/klim/umass/CMPSCI645/project_topics/social_networks/big_data_files");
 //		executerQuery1.findPathWithIndexBTreeHybrid(858, 587, 1, 

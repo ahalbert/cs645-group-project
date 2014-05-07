@@ -67,7 +67,7 @@ class InsertionThread implements Runnable {
 						commentToPersonS.put(commentId, creatorId);
 				   }
 			   }
-			   System.out.println("ready " + counter);
+			 //  System.out.println("ready " + counter);
 			   LoaderQuery1.counter--; 
 		   }catch(Exception ex)
 		   {
@@ -167,7 +167,7 @@ class InsertionThreadCommentsPerson implements Runnable {
 						}
 				   }
 			   }
-			   System.out.println("ready " + counter);
+			 //  System.out.println("ready " + counter);
 			   LoaderQuery1.counter2--; 
 		   }catch(Exception ex)
 		   {
@@ -186,11 +186,17 @@ public class LoaderQuery1 {
 	public static int limits[] = new int[counter]; 
 //	public static ConcurrentHashMap<Integer, Integer> commentToPersonS = new ConcurrentHashMap<Integer, Integer>();
 	public static HashMap<Integer,Integer> commentToPersonS1[] = new HashMap[4];
+	
+	//contains approximate ratios of rownumber/filesize for each of the files 
+	public static HashMap<String,Float> filesToRatio = new HashMap<String,Float>(); 
+	
 	static{
 		commentToPersonS1[0] = new HashMap<Integer,Integer>();
 		commentToPersonS1[1] = new HashMap<Integer,Integer>();
 		commentToPersonS1[2] = new HashMap<Integer,Integer>();
 		commentToPersonS1[3] = new HashMap<Integer,Integer>();
+		filesToRatio.put("comment_hasCreator_person.csv", 0.06976551998741f);
+		filesToRatio.put("comment_replyOf_comment.csv", 0.05292565818127f);		
 	}
 	
 	
@@ -326,7 +332,11 @@ public class LoaderQuery1 {
 		
 		try
 		{
-			long time = System.currentTimeMillis();
+//			long time = System.currentTimeMillis();
+//			File f = new File(dataPath + "/comment_hasCreator_person.csv");
+//			System.out.println(f.length());
+//			System.out.println("length in: " + (System.currentTimeMillis()-time));
+			
 			BufferedReader br = new BufferedReader(new FileReader(dataPath + "/person_knows_person.csv"));  
 			String line = null;  
 			br.readLine(); 
@@ -491,8 +501,8 @@ public class LoaderQuery1 {
 		//this is done reading the file comment_replyOf_comment
 		if(commentsConnectedPersons.size()==0)
 		{
-			//doPreload(dataPath); 
-			doPreloadImproved(dataPath, numberOfComments); 
+			doPreload(dataPath); 
+			//doPreloadImproved(dataPath, numberOfComments); 
 		}
 		Comment comment = new Comment(knowsFrom, knowsTo); 
 //		comment.setUserIdFrom(knowsFrom);
@@ -638,20 +648,26 @@ public class LoaderQuery1 {
 	public void doPreloadImprovedV2(String dataPath, int comments, 
 				HashSet<Comment> personKnowsPerson)
 	{
-		long time2 = System.currentTimeMillis(); 
-		Runnable r = new InsertionThread(1,5000000, dataPath + "/comment_hasCreator_person.csv",0,commentToPersonS1[0]);
+		long time2 = System.currentTimeMillis();
+		File f = new File(dataPath + "/comment_hasCreator_person.csv"); 
+		long fileSize =  f.length(); 
+		float ratio = filesToRatio.get("comment_hasCreator_person.csv");
+		int lines = Math.round(fileSize*ratio); 
+		int range = lines/4; 
+		
+		Runnable r = new InsertionThread(1,range*1, dataPath + "/comment_hasCreator_person.csv",0,commentToPersonS1[0]);
 		Thread t = new Thread(r); 
 		t.setPriority(Thread.MAX_PRIORITY);
 		t.start();
-		Runnable r2 = new InsertionThread(5000000,10000000, dataPath + "/comment_hasCreator_person.csv",1,commentToPersonS1[1]);
+		Runnable r2 = new InsertionThread(range*1,range*2, dataPath + "/comment_hasCreator_person.csv",1,commentToPersonS1[1]);
 		Thread t2 = new Thread(r2); 
 		t2.setPriority(Thread.MAX_PRIORITY);
 		t2.start();
-		Runnable r3 = new InsertionThread(10000000,15000000, dataPath + "/comment_hasCreator_person.csv",2,commentToPersonS1[2]);
+		Runnable r3 = new InsertionThread(range*2,range*3, dataPath + "/comment_hasCreator_person.csv",2,commentToPersonS1[2]);
 		Thread t3 = new Thread(r3); 
 		t3.setPriority(Thread.MAX_PRIORITY);
 		t3.start();
-		Runnable r4 = new InsertionThread(15000000,99999999, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS1[3]);
+		Runnable r4 = new InsertionThread(range*3,99999999, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS1[3]);
 		Thread t4 = new Thread(r4); 
 		t4.setPriority(Thread.MAX_PRIORITY);
 		t4.start();
@@ -660,7 +676,7 @@ public class LoaderQuery1 {
 		{
 			while(counter>0)
 			{
-				Thread.currentThread().sleep(300l);				
+				Thread.currentThread().sleep(10l);				
 			}
 			System.out.println("I am on: " + (System.currentTimeMillis()-time2));
 		}
@@ -671,22 +687,27 @@ public class LoaderQuery1 {
 		BufferedReader br = null; 
 		try{
 			//step 1 start
+			f = new File(dataPath + "/comment_replyOf_comment.csv"); 
+			fileSize =  f.length(); 
+			ratio = filesToRatio.get("comment_replyOf_comment.csv");
+			lines = Math.round(fileSize*ratio); 
+			range = lines/4; 
 
 			//InsertionThreadCommentsPerson
 			time2 = System.currentTimeMillis(); 
-			Runnable rs = new InsertionThreadCommentsPerson(1,3000000, dataPath + "/comment_replyOf_comment.csv",0,comments, personKnowsPerson);
+			Runnable rs = new InsertionThreadCommentsPerson(1,range*1, dataPath + "/comment_replyOf_comment.csv",0,comments, personKnowsPerson);
 			Thread ts = new Thread(rs); 
 			ts.setPriority(Thread.MAX_PRIORITY);
 			ts.start();
-			Runnable rs2 = new InsertionThreadCommentsPerson(3000000,6000000, dataPath + "/comment_replyOf_comment.csv",1,comments, personKnowsPerson);
+			Runnable rs2 = new InsertionThreadCommentsPerson(range*1,range*2, dataPath + "/comment_replyOf_comment.csv",1,comments, personKnowsPerson);
 			Thread ts2 = new Thread(rs2); 
 			ts2.setPriority(Thread.MAX_PRIORITY);
 			ts2.start();
-			Runnable rs3 = new InsertionThreadCommentsPerson(6000000,9000000, dataPath + "/comment_replyOf_comment.csv",2,comments, personKnowsPerson);
+			Runnable rs3 = new InsertionThreadCommentsPerson(range*2,range*3, dataPath + "/comment_replyOf_comment.csv",2,comments, personKnowsPerson);
 			Thread ts3 = new Thread(rs3); 
 			ts3.setPriority(Thread.MAX_PRIORITY);
 			ts3.start();
-			Runnable rs4 = new InsertionThreadCommentsPerson(9000000,99999999, dataPath + "/comment_replyOf_comment.csv",3,comments, personKnowsPerson);
+			Runnable rs4 = new InsertionThreadCommentsPerson(range*3,99999999, dataPath + "/comment_replyOf_comment.csv",3,comments, personKnowsPerson);
 			Thread ts4 = new Thread(rs4); 
 			ts4.setPriority(Thread.MAX_PRIORITY);
 			ts4.start();
@@ -695,7 +716,7 @@ public class LoaderQuery1 {
 			{
 				while(counter2>0)
 				{
-					Thread.currentThread().sleep(300l);				
+					Thread.currentThread().sleep(10l);				
 				}
 				System.out.println("I am on 2: " + (System.currentTimeMillis()-time2));
 			}
@@ -721,7 +742,7 @@ public class LoaderQuery1 {
 			{
 				ex.printStackTrace();
 			}
-		}		
+		}
 	}
 	public void doPreloadImproved(String dataPath, int comments)
 	{
@@ -747,7 +768,7 @@ public class LoaderQuery1 {
 		{
 			while(counter>0)
 			{
-				Thread.currentThread().sleep(300l);				
+				Thread.currentThread().sleep(10l);				
 			}
 			System.out.println("I am on: " + (System.currentTimeMillis()-time2));
 		}
@@ -782,7 +803,7 @@ public class LoaderQuery1 {
 			{
 				while(counter2>0)
 				{
-					Thread.currentThread().sleep(300l);				
+					Thread.currentThread().sleep(10l);				
 				}
 				System.out.println("I am on 2: " + (System.currentTimeMillis()-time2));
 			}
