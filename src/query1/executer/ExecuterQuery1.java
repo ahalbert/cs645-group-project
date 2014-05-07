@@ -20,7 +20,7 @@ import java.util.Queue;
 public class ExecuterQuery1 {
 	
 	//first version: breadth first search
-	public void findPath(Integer userFrom, Integer userTo, Integer comments)
+	public void findPath(Integer userFrom, Integer userTo, Integer comments, String filePath)
 	{
 		LoaderQuery1 loaderQuery1 = new LoaderQuery1(); 
 		HashMap<Integer,ArrayList<Integer>> data = null;
@@ -28,8 +28,7 @@ public class ExecuterQuery1 {
 		
 		long time = System.currentTimeMillis();
 		
-		data = loaderQuery1.loadData(userFrom, userTo, comments, "/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
-				+ "Design and Implementation/project topics/social_networks/big_data_files");
+		data = loaderQuery1.loadData(userFrom, userTo, comments, filePath);
 		
 		System.out.println("Time to load the data: " + (System.currentTimeMillis()-time));
 		
@@ -328,9 +327,8 @@ public class ExecuterQuery1 {
 		long time = System.currentTimeMillis();
 		//executerQuery1.findPathWithIndexBTree(858, 58700, 1);
 		//executerQuery1.findPath(858, 58700, 1);91851
-		executerQuery1.findPathWithIndexBTreeHybrid(858, 587, 1, 
-				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
-				+ "Design and Implementation/project topics/social_networks/big_data_files");
+		executerQuery1.findPath(858, 587, 1, 
+				"/Users/klimzaporojets/klim/umass/CMPSCI645/project_topics/social_networks/big_data_files");
 //		executerQuery1.findPathWithIndexBTreeHybrid(858, 587, 1, 
 //				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
 //				+ "Design and Implementation/project topics/social_networks/data_files");

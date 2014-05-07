@@ -109,7 +109,7 @@ public class MapDBIndexer {
 					//System.out.println(counter); 
 				}
 			}
-			commentsPersonB = getCommentsHash(tuple2.b);
+			commentsPersonB = getCommentsHash(tuple2.b, datapath);
 			
 			Integer setsIntersected = Sets.intersection(commentsRepplied, commentsPersonB).size();
 			
@@ -380,9 +380,9 @@ public class MapDBIndexer {
 //		
 //		
 //	}	
-	public static HashSet<String> getCommentsHash(Integer personId)
+	public static HashSet<String> getCommentsHash(Integer personId, String datapath)
 	{
-		String comments = getCommentsForPerson(personId);
+		String comments = getCommentsForPerson(personId, datapath);
 		if(comments == null)
 		{
 			return new HashSet<String>(); 
@@ -391,7 +391,7 @@ public class MapDBIndexer {
 	}
 	public static HashSet<String> getCommentsRepplied(Integer personId, String datapath)
 	{
-		String comments = getCommentsForPerson(personId);
+		String comments = getCommentsForPerson(personId, datapath);
 		HashSet<String> commentsRepplied = new HashSet<String>(); 
 		if(comments==null)
 		{
@@ -470,13 +470,12 @@ public class MapDBIndexer {
 	}
 	
 	//gets the comments for a particular person 
-	public static String getCommentsForPerson(Integer personId)
+	public static String getCommentsForPerson(Integer personId, String datapath)
 	{
 		if(treeMapCommentsForPerson==null)
 		{
 			File dbFile = new File(
-				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-						+ "and Implementation/project topics/social_networks/sorted_files/mapdb.index");
+				datapath + "/sorted_files/mapdb.index");
 			DB db = DBMaker.newFileDB(dbFile)
 					/** disabling Write Ahead Log makes import much faster */
 					.transactionDisable().make();
@@ -511,7 +510,7 @@ public class MapDBIndexer {
 
 				//System.out.println(counter); 
 
-		HashSet<String> commentsPersonB = getCommentsHash(personId2);
+		HashSet<String> commentsPersonB = getCommentsHash(personId2, datapath);
 		
 		Integer setsIntersected = Sets.intersection(commentsRepplied, commentsPersonB).size();
 
@@ -526,7 +525,7 @@ public class MapDBIndexer {
 
 		//System.out.println(counter); 
 
-		commentsPersonB = getCommentsHash(personId1);
+		commentsPersonB = getCommentsHash(personId1, datapath);
 		setsIntersected = Sets.intersection(commentsRepplied, commentsPersonB).size();
 		Integer comments2 = setsIntersected;
 				//treeMapNumberCommentsPersonToPerson.get(personId2 + "_" + personId1);
