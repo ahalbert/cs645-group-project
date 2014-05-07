@@ -94,6 +94,80 @@ public class ExecuterQuery1 {
 		
 	}
 	
+	//second version: preloads the person_knows_person first 
+	public void findPathV2(Integer userFrom, Integer userTo, Integer comments, String filePath)
+	{
+		LoaderQuery1 loaderQuery1 = new LoaderQuery1(); 
+		HashMap<Integer,ArrayList<Integer>> data = null;
+		
+		
+		long time = System.currentTimeMillis();
+		
+		data = loaderQuery1.loadDataV2(userFrom, userTo, comments, filePath);
+		
+		System.out.println("Time to load the data: " + (System.currentTimeMillis()-time));
+		
+//		ArrayList<Integer> neighbours = data.get(userFrom);
+		LinkedList<Integer> queue = new LinkedList<Integer>(); 
+		queue.add(userFrom);
+		
+		HashMap<Integer,Path> distance = new HashMap<Integer,Path>();
+		Path path = new Path(0,null);
+		distance.put(userFrom, path);
+		Integer currentElement=null;
+		Integer previousElement=null;
+		Integer previousDist=0;
+		while(queue.size()>0 && !(currentElement=queue.poll()).equals(userTo))
+		{
+//			if(currentElement==402)
+//			{
+//				System.out.println("current element is 402");
+//			}
+			Path currentPath = distance.get(currentElement);
+//			if(dist==null)
+//			{
+//				System.out.println("Error!!! distance should not be null!!!");
+//			}
+			ArrayList<Integer> neighbours = data.get(currentElement);
+			
+			if(neighbours!=null)
+			{
+				
+				for(Integer neighbour:neighbours)
+				{
+					Path neighbourDistance = distance.get(neighbour); 
+					if(neighbourDistance==null)
+					{
+						distance.put(neighbour, new Path(currentPath.getDistanceToOrigin()+1,currentElement));
+						queue.add(neighbour);
+					}
+					else
+					{
+						//System.out.println("distance not null");
+					}
+				}
+				
+				previousElement=currentElement;
+			}
+
+		}
+		Path parent = null;
+		if(!currentElement.equals(userTo))
+		{
+			System.out.println("Path not found");
+		}
+		else
+		{
+			System.out.println(currentElement);
+			while((parent=distance.get(currentElement)).getParent()!=null)
+			{
+				currentElement=parent.getParent(); 
+				System.out.println(currentElement);
+			}
+		}
+		System.out.println("The end 2a");
+		
+	}	
 
 	//first version: breadth first search
 	public void findPathWithIndex(Integer userFrom, Integer userTo, Integer comments)
@@ -327,7 +401,7 @@ public class ExecuterQuery1 {
 		long time = System.currentTimeMillis();
 		//executerQuery1.findPathWithIndexBTree(858, 58700, 1);
 		//executerQuery1.findPath(858, 58700, 1);91851
-		executerQuery1.findPath(858, 587, 1, 
+		executerQuery1.findPathV2(858, 587, 1, 
 				"/Users/klimzaporojets/klim/umass/CMPSCI645/project_topics/social_networks/big_data_files");
 //		executerQuery1.findPathWithIndexBTreeHybrid(858, 587, 1, 
 //				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database "

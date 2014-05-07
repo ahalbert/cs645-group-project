@@ -92,9 +92,9 @@ public class IndexedLoaderQuery1 {
 		{
 			doIndexPreload(dataPath); 
 		}
-		Comment comment = new Comment(); 
-		comment.setUserIdFrom(knowsFrom);
-		comment.setUserIdTo(knowsTo);
+		Comment comment = new Comment(knowsFrom, knowsTo); 
+//		comment.setUserIdFrom(knowsFrom);
+//		comment.setUserIdTo(knowsTo);
 		
 		Integer number = commentsConnectedPersons.get(comment);
 		if(number!=null)

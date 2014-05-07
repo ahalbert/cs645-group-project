@@ -16,6 +16,12 @@ public class Comment {
 //	public void setNumberOfComments(int numberOfComments) {
 //		this.numberOfComments = numberOfComments;
 //	}
+
+	public Comment(int userIdFrom, int userIdTo)
+	{
+		this.userIdFrom = userIdFrom; 
+		this.userIdTo = userIdTo; 
+	}
 	public int getUserIdFrom() {
 		return userIdFrom;
 	}

@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,28 +48,23 @@ class InsertionThread implements Runnable {
 				   
 				   if(++counter>=from)
 				   {
-					   if(!flag)
-					   {
-						   flag=true; 
-						   System.out.println(id + " " + line);
-					   }
 					   if(counter==1)
 					   {
 						   counter++;
 						   line = br.readLine();
 					   }
-//					   if(counter%10000==0)
-//					   {
-//						   System.out.println(counter);
-//					   }
+					   if(!flag)
+					   {
+						   flag=true; 
+						   //System.out.println(id + " " + line);
+						   StringTokenizer st = new StringTokenizer(line,"|");
+						   Integer commentId = Integer.valueOf(st.nextToken());						   
+						   LoaderQuery1.limits[id] =  commentId;
+					   }
 						StringTokenizer st = new StringTokenizer(line,"|");
 						Integer commentId = Integer.valueOf(st.nextToken());
 						Integer creatorId = Integer.valueOf(st.nextToken());
-//						if(commentId%4==0)
 						commentToPersonS.put(commentId, creatorId);
-//						synchronized(LoaderQuery1.commentToPersonS)
-//						{
-//						}
 				   }
 			   }
 			   System.out.println("ready " + counter);
@@ -80,42 +76,125 @@ class InsertionThread implements Runnable {
 	   }
 	}
 
+class InsertionThreadCommentsPerson implements Runnable {
+	int from; 
+	int to; 
+	String path; 
+	int id; 
+	int commentsNumber; 
+	HashSet<Comment> personKnowsPerson; 
+//	boolean flag = false; 
+	   public InsertionThreadCommentsPerson(int from, int to, String path, int id, int commentsNumber, 
+			   HashSet<Comment> personKnowsPerson) {
+	       // store parameter for later user
+		   this.from = from; 
+		   this.to = to; 
+		   this.path = path; 
+		   this.id = id; 
+		   this.commentsNumber = commentsNumber; 
+		   this.personKnowsPerson = personKnowsPerson; 
+	   }
+
+	   public void run() {
+		   try
+		   {
+			   BufferedReader br = new BufferedReader(new FileReader(path));
+			   String line; 
+			   int counter=0; 
+			   
+			   while ((line = br.readLine()) != null & counter<to)  
+			   {
+				   if(++counter>=from)
+				   {
+					   	if(counter==1)
+					   	{
+					   		counter++;
+					   		line = br.readLine();
+					   	}
+						StringTokenizer st = new StringTokenizer(line,"|");
+						Integer replyId = Integer.valueOf(st.nextToken());
+						Integer commentId = Integer.valueOf(st.nextToken());
+						int id1=0; 
+						int id2=0;
+						if(replyId>=LoaderQuery1.limits[1]&&replyId<LoaderQuery1.limits[2])
+						{
+							id1=1;
+						}
+						else if (replyId>=LoaderQuery1.limits[2]&&replyId<LoaderQuery1.limits[3])
+						{
+							id1=2;
+							
+						}
+						else if(replyId>=LoaderQuery1.limits[3])
+						{
+							id1=3;
+						}
+						if(commentId>=LoaderQuery1.limits[1]&&commentId<LoaderQuery1.limits[2])
+						{
+							id2=1;
+						}
+						else if (commentId>=LoaderQuery1.limits[2]&&commentId<LoaderQuery1.limits[3])
+						{
+							id2=2;
+							
+						}
+						else if(commentId>=LoaderQuery1.limits[3])
+						{
+							id2=3;
+						}
+						Integer commentFrom = LoaderQuery1.commentToPersonS1[id1].get(replyId);//.get(replyId); 
+						Integer commentTo = LoaderQuery1.commentToPersonS1[id2].get(commentId); //commentToPerson.get(commentId); 
+						Comment comment = new Comment(commentFrom,commentTo);
+						
+						if(//personKnowsPerson==null || 
+								personKnowsPerson.contains(comment))
+						{
+							synchronized(LoaderQuery1.commentsConnectedPersons){
+								Integer number = LoaderQuery1.commentsConnectedPersons.get(comment);
+								if(number==null || number<=commentsNumber)
+								{
+									if(number==null)
+									{
+										number=1; 
+									}
+									else
+									{
+										number++; 
+									}
+								}
+								LoaderQuery1.commentsConnectedPersons.put(comment, number);
+							}
+						}
+				   }
+			   }
+			   System.out.println("ready " + counter);
+			   LoaderQuery1.counter2--; 
+		   }catch(Exception ex)
+		   {
+			   ex.printStackTrace();
+		   }
+	   }
+	}
+
 public class LoaderQuery1 {
 	
 	
-	HashMap<Comment, Integer> commentsConnectedPersons = new HashMap<Comment, Integer>();
+	public static HashMap<Comment, Integer> commentsConnectedPersons = new HashMap<Comment, Integer>();
 	public static int counter = 4;
+	public static int counter2 = 4;
+	public static Comment currentComment = null; 
+	public static int limits[] = new int[counter]; 
 //	public static ConcurrentHashMap<Integer, Integer> commentToPersonS = new ConcurrentHashMap<Integer, Integer>();
 	public static HashMap<Integer,Integer> commentToPersonS1[] = new HashMap[4];
 	static{
-	commentToPersonS1[0] = new HashMap<Integer,Integer>();
-	commentToPersonS1[1] = new HashMap<Integer,Integer>();
-	commentToPersonS1[2] = new HashMap<Integer,Integer>();
-	commentToPersonS1[3] = new HashMap<Integer,Integer>();
+		commentToPersonS1[0] = new HashMap<Integer,Integer>();
+		commentToPersonS1[1] = new HashMap<Integer,Integer>();
+		commentToPersonS1[2] = new HashMap<Integer,Integer>();
+		commentToPersonS1[3] = new HashMap<Integer,Integer>();
 	}
-//	public static HashMap<Integer, Integer> commentToPersonS5 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS6 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS7 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS8 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS9 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS10 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS11 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS12 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS13 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS14 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS15 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS16 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS17 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS18 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS19 = new HashMap<Integer,Integer>();
-//	public static HashMap<Integer, Integer> commentToPersonS20 = new HashMap<Integer,Integer>();
 	
-//	static{
-//		commentToPersonS[0] = new HashMap<Integer,Integer>(); 
-//		commentToPersonS[1] = new HashMap<Integer,Integer>(); 
-//		commentToPersonS[2] = new HashMap<Integer,Integer>(); 
-//		commentToPersonS[3] = new HashMap<Integer,Integer>(); 
-//	}
+	
+	
 	public HashMap<Integer,ArrayList<Integer>> loadDataThreads(Integer from, Integer to, Integer numberOfComments, String dataPath) throws Exception
 	{
 //		BufferedReader br = new BufferedReader(new FileReader(dataPath + "/person_knows_person.csv"));  
@@ -187,6 +266,8 @@ public class LoaderQuery1 {
 	public HashMap<Integer,ArrayList<Integer>> loadData(Integer from, Integer to, Integer numberOfComments, String dataPath)
 	{
 		long number_of_lines_read = 0; 
+		
+		
 		HashMap<Integer, ArrayList<Integer>> query1Data = new HashMap<Integer, ArrayList<Integer>>();
 		try
 		{
@@ -238,6 +319,81 @@ public class LoaderQuery1 {
 		}
 		return query1Data; 
 	}
+	//V2 preloads person_knows_person before. 
+	public HashMap<Integer,ArrayList<Integer>> loadDataV2(Integer from, Integer to, Integer numberOfComments, String dataPath)
+	{
+		HashSet<Comment> hashComments = new HashSet<Comment>();
+		
+		try
+		{
+			long time = System.currentTimeMillis();
+			BufferedReader br = new BufferedReader(new FileReader(dataPath + "/person_knows_person.csv"));  
+			String line = null;  
+			br.readLine(); 
+			while ((line = br.readLine()) != null)  
+			{
+				StringTokenizer st = new StringTokenizer(line,"|");
+				Integer knowsFrom = Integer.valueOf(st.nextToken());
+				Integer knowsTo = Integer.valueOf(st.nextToken());
+				Comment cmt = new Comment(knowsFrom, knowsTo); 
+				hashComments.add(cmt);
+			}
+		}
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		HashMap<Integer, ArrayList<Integer>> query1Data = new HashMap<Integer, ArrayList<Integer>>();
+		try
+		{
+			long time = System.currentTimeMillis(); 
+//			BufferedReader br = new BufferedReader(new FileReader(dataPath + "/person_knows_person.csv"));  
+//			String line = null;  
+//			br.readLine(); 
+//			while ((line = br.readLine()) != null)  
+//			{
+			Iterator<Comment> iterator = hashComments.iterator();
+			while(iterator.hasNext()){
+				//StringTokenizer may be much faster: 
+				//http://www.javamex.com/tutorials/regular_expressions/splitting_tokenisation_performance.shtml#.UxoFNV6YS18
+//				StringTokenizer st = new StringTokenizer(line,"|");
+				Comment cmt = iterator.next();
+				Integer knowsFrom = cmt.getUserIdFrom();
+				Integer knowsTo = cmt.getUserIdTo();
+				
+				/*begin: check the number of comments*/
+				boolean doBelong = false; 
+				if(numberOfComments==-1)
+				{
+					doBelong=true; 
+				}
+				else
+				{
+					doBelong = isNumberOfCommentsGreaterThanV3(knowsFrom,knowsTo,numberOfComments, dataPath, 
+							hashComments);
+				}
+				/*end: check the number of comments*/
+				if(doBelong==true)
+				{
+					ArrayList<Integer> whomKnows = query1Data.get(knowsFrom);
+					if(whomKnows==null)
+					{
+						whomKnows = new ArrayList<Integer>();
+					}
+					whomKnows.add(knowsTo);
+					query1Data.put(knowsFrom, whomKnows);
+				}				
+			} 
+//			br.close();
+//			System.out.println("reading straight from file: " + (System.currentTimeMillis()-time));
+		}
+		catch(Exception ex)
+		{
+			 ex.printStackTrace(); 
+		}
+		return query1Data;
+
+	}	
 	
 	public boolean isNumberOfCommentsGreaterThanV1(Integer knowsFrom, Integer knowsTo, Integer numberOfComments, String dataPath)
 	{
@@ -338,9 +494,9 @@ public class LoaderQuery1 {
 			//doPreload(dataPath); 
 			doPreloadImproved(dataPath, numberOfComments); 
 		}
-		Comment comment = new Comment(); 
-		comment.setUserIdFrom(knowsFrom);
-		comment.setUserIdTo(knowsTo);
+		Comment comment = new Comment(knowsFrom, knowsTo); 
+//		comment.setUserIdFrom(knowsFrom);
+//		comment.setUserIdTo(knowsTo);
 		
 		Integer number = commentsConnectedPersons.get(comment);
 		if(number!=null)
@@ -360,7 +516,41 @@ public class LoaderQuery1 {
 		}
 		return false; 
 	}	
-	
+	//uses info from person_knows_person in order no to examine more comment_Replyof_comment than necessary
+	public boolean isNumberOfCommentsGreaterThanV3(Integer knowsFrom, Integer knowsTo, 
+			Integer numberOfComments, String dataPath, HashSet<Comment> personKnowsPerson)
+	{
+		//step 0: pre-loads all the data (only if not preloaded before)
+		//step 1: gets the comments of knowsTo from comment_hasCreator_person
+		//step 2: starts counting the answers of knowsFrom checking if these answers are for comments read in step 1. 
+		//this is done reading the file comment_replyOf_comment
+		if(commentsConnectedPersons.size()==0)
+		{
+			//doPreload(dataPath); 
+			doPreloadImprovedV2(dataPath, numberOfComments, personKnowsPerson); 
+		}
+		Comment comment = new Comment(knowsFrom, knowsTo); 
+//		comment.setUserIdFrom(knowsFrom);
+//		comment.setUserIdTo(knowsTo);
+		
+		Integer number = commentsConnectedPersons.get(comment);
+		if(number!=null)
+		{
+			if(number>numberOfComments)
+			{
+				//the other way around
+				comment.setUserIdFrom(knowsTo);
+				comment.setUserIdTo(knowsFrom);
+				
+				number = commentsConnectedPersons.get(comment);
+				if(number!=null && number>numberOfComments)
+				{
+					return true;
+				}
+			}
+		}
+		return false; 
+	}		
 	public void doPreload(String dataPath)
 	{
 		BufferedReader br = null; 
@@ -408,9 +598,9 @@ public class LoaderQuery1 {
 				
 				Integer commentFrom = commentToPerson.get(replyId); 
 				Integer commentTo = commentToPerson.get(commentId); 
-				Comment comment = new Comment(); 
-				comment.setUserIdFrom(commentFrom);
-				comment.setUserIdTo(commentTo);
+				Comment comment = new Comment(commentFrom, commentTo); 
+//				comment.setUserIdFrom(commentFrom);
+//				comment.setUserIdTo(commentTo);
 				
 				
 				Integer number = commentsConnectedPersons.get(comment);
@@ -445,6 +635,94 @@ public class LoaderQuery1 {
 			}
 		}
 	}
+	public void doPreloadImprovedV2(String dataPath, int comments, 
+				HashSet<Comment> personKnowsPerson)
+	{
+		long time2 = System.currentTimeMillis(); 
+		Runnable r = new InsertionThread(1,5000000, dataPath + "/comment_hasCreator_person.csv",0,commentToPersonS1[0]);
+		Thread t = new Thread(r); 
+		t.setPriority(Thread.MAX_PRIORITY);
+		t.start();
+		Runnable r2 = new InsertionThread(5000000,10000000, dataPath + "/comment_hasCreator_person.csv",1,commentToPersonS1[1]);
+		Thread t2 = new Thread(r2); 
+		t2.setPriority(Thread.MAX_PRIORITY);
+		t2.start();
+		Runnable r3 = new InsertionThread(10000000,15000000, dataPath + "/comment_hasCreator_person.csv",2,commentToPersonS1[2]);
+		Thread t3 = new Thread(r3); 
+		t3.setPriority(Thread.MAX_PRIORITY);
+		t3.start();
+		Runnable r4 = new InsertionThread(15000000,99999999, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS1[3]);
+		Thread t4 = new Thread(r4); 
+		t4.setPriority(Thread.MAX_PRIORITY);
+		t4.start();
+
+		try
+		{
+			while(counter>0)
+			{
+				Thread.currentThread().sleep(300l);				
+			}
+			System.out.println("I am on: " + (System.currentTimeMillis()-time2));
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+		}
+		BufferedReader br = null; 
+		try{
+			//step 1 start
+
+			//InsertionThreadCommentsPerson
+			time2 = System.currentTimeMillis(); 
+			Runnable rs = new InsertionThreadCommentsPerson(1,3000000, dataPath + "/comment_replyOf_comment.csv",0,comments, personKnowsPerson);
+			Thread ts = new Thread(rs); 
+			ts.setPriority(Thread.MAX_PRIORITY);
+			ts.start();
+			Runnable rs2 = new InsertionThreadCommentsPerson(3000000,6000000, dataPath + "/comment_replyOf_comment.csv",1,comments, personKnowsPerson);
+			Thread ts2 = new Thread(rs2); 
+			ts2.setPriority(Thread.MAX_PRIORITY);
+			ts2.start();
+			Runnable rs3 = new InsertionThreadCommentsPerson(6000000,9000000, dataPath + "/comment_replyOf_comment.csv",2,comments, personKnowsPerson);
+			Thread ts3 = new Thread(rs3); 
+			ts3.setPriority(Thread.MAX_PRIORITY);
+			ts3.start();
+			Runnable rs4 = new InsertionThreadCommentsPerson(9000000,99999999, dataPath + "/comment_replyOf_comment.csv",3,comments, personKnowsPerson);
+			Thread ts4 = new Thread(rs4); 
+			ts4.setPriority(Thread.MAX_PRIORITY);
+			ts4.start();
+
+			try
+			{
+				while(counter2>0)
+				{
+					Thread.currentThread().sleep(300l);				
+				}
+				System.out.println("I am on 2: " + (System.currentTimeMillis()-time2));
+			}
+			catch (Exception ex)
+			{
+				ex.printStackTrace();
+			}
+		}
+		catch(Exception ex)
+		{
+			//do something about it?
+			ex.printStackTrace();
+		}
+		finally{
+			try
+			{
+				if(br!=null)
+				{
+					br.close();
+				}
+			}
+			catch(Exception ex)
+			{
+				ex.printStackTrace();
+			}
+		}		
+	}
 	public void doPreloadImproved(String dataPath, int comments)
 	{
 		long time2 = System.currentTimeMillis(); 
@@ -464,71 +742,14 @@ public class LoaderQuery1 {
 		Thread t4 = new Thread(r4); 
 		t4.setPriority(Thread.MAX_PRIORITY);
 		t4.start();
-//		Runnable r5 = new InsertionThread(12000000,15000000, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS5);
-//		new Thread(r5).start(); 
-//		Runnable r6 = new InsertionThread(15000000,18000000, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS6);
-//		new Thread(r6).start(); 
-//		Runnable r7 = new InsertionThread(18000000,99999999, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS7);
-//		new Thread(r7).start(); 
-//		Runnable r8 = new InsertionThread(14000000,16000000, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS8);
-//		new Thread(r8).start(); 
-//		Runnable r9 = new InsertionThread(16000000,18000000, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS9);
-//		new Thread(r9).start(); 
-//		Runnable r10 = new InsertionThread(18000000,99999999, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS10);
-//		new Thread(r10).start(); 
 
-//		Runnable r = new InsertionThread(1,1000000, dataPath + "/comment_hasCreator_person.csv",0,commentToPersonS1);
-//		new Thread(r).start(); 
-//		Runnable r2 = new InsertionThread(1000000,2000000, dataPath + "/comment_hasCreator_person.csv",1,commentToPersonS2);
-//		new Thread(r2).start(); 
-//		Runnable r3 = new InsertionThread(2000000,3000000, dataPath + "/comment_hasCreator_person.csv",2,commentToPersonS3);
-//		new Thread(r3).start(); 
-//		Runnable r4 = new InsertionThread(3000000,4000000, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS4);
-//		new Thread(r4).start(); 
-//		Runnable r5 = new InsertionThread(4000000,5000000, dataPath + "/comment_hasCreator_person.csv",0,commentToPersonS5);
-//		new Thread(r5).start(); 
-//		Runnable r6 = new InsertionThread(5000000,6000000, dataPath + "/comment_hasCreator_person.csv",1,commentToPersonS6);
-//		new Thread(r6).start(); 
-//		Runnable r7 = new InsertionThread(6000000,7000000, dataPath + "/comment_hasCreator_person.csv",2,commentToPersonS7);
-//		new Thread(r7).start(); 
-//		Runnable r8 = new InsertionThread(7000000,8000000, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS8);
-//		new Thread(r8).start(); 
-//		Runnable r9 = new InsertionThread(8000000,9000000, dataPath + "/comment_hasCreator_person.csv",0,commentToPersonS9);
-//		new Thread(r9).start(); 
-//		Runnable r10 = new InsertionThread(9000000,10000000, dataPath + "/comment_hasCreator_person.csv",1,commentToPersonS10);
-//		new Thread(r10).start(); 
-//		Runnable r11 = new InsertionThread(10000000,11000000, dataPath + "/comment_hasCreator_person.csv",2,commentToPersonS11);
-//		new Thread(r11).start(); 
-//		Runnable r12 = new InsertionThread(11000000,12000000, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS12);
-//		new Thread(r12).start(); 
-//		Runnable r13 = new InsertionThread(12000000,13000000, dataPath + "/comment_hasCreator_person.csv",0,commentToPersonS13);
-//		new Thread(r13).start(); 
-//		Runnable r14 = new InsertionThread(13000000,14000000, dataPath + "/comment_hasCreator_person.csv",1,commentToPersonS14);
-//		new Thread(r14).start(); 
-//		Runnable r15 = new InsertionThread(14000000,15000000, dataPath + "/comment_hasCreator_person.csv",2,commentToPersonS15);
-//		new Thread(r15).start(); 
-//		Runnable r16 = new InsertionThread(15000000,16000000, dataPath + "/comment_hasCreator_person.csv",3,commentToPersonS16);
-//		new Thread(r16).start(); 
-//		Runnable r17 = new InsertionThread(16000000,17000000, dataPath + "/comment_hasCreator_person.csv",0,commentToPersonS17);
-//		new Thread(r17).start(); 
-//		Runnable r18 = new InsertionThread(17000000,18000000, dataPath + "/comment_hasCreator_person.csv",1,commentToPersonS18);
-//		new Thread(r18).start(); 
-//		Runnable r19 = new InsertionThread(18000000,19000000, dataPath + "/comment_hasCreator_person.csv",2,commentToPersonS19);
-//		new Thread(r19).start(); 
-//		Runnable r20 = new InsertionThread(19000000,99000000, dataPath + "/comment_hasCreator_person.csv",2,commentToPersonS20);
-//		new Thread(r20).start(); 
 		try
 		{
 			while(counter>0)
 			{
 				Thread.currentThread().sleep(300l);				
 			}
-//			commentToPersonS1.putAll(commentToPersonS2);
-//			commentToPersonS1.putAll(commentToPersonS3);
-//			commentToPersonS1.putAll(commentToPersonS4);
-			//System.out.println(commentToPersonS1.keySet().size() );
 			System.out.println("I am on: " + (System.currentTimeMillis()-time2));
-//			Thread.currentThread().sleep(1000000000l);
 		}
 		catch (Exception ex)
 		{
@@ -537,93 +758,43 @@ public class LoaderQuery1 {
 		BufferedReader br = null; 
 		try{
 			//step 1 start
-//			br = new BufferedReader(new FileReader(dataPath + "/comment_hasCreator_person.csv"));  
-//			String line = null;  
-//			br.readLine();
-//			
-//			HashMap<Integer, Integer> commentToPerson = new HashMap<Integer, Integer>(); 
-//			long time1 = System.currentTimeMillis(); 
-//			while ((line = br.readLine()) != null)  
-//			{
-//				StringTokenizer st = new StringTokenizer(line,"|");
-//				Integer commentId = Integer.valueOf(st.nextToken());
-//				Integer creatorId = Integer.valueOf(st.nextToken());
-//				commentToPerson.put(commentId, creatorId);
-//			}
-//			System.out.println("Time to load comment_hasCreator_person: " + (System.currentTimeMillis()-time1));
-			
-			
-			//step 1 end 
-			//step 2 start 
-//			br.close();
-			br = new BufferedReader(new FileReader(dataPath + "/comment_replyOf_comment.csv"));  
-			String line = null;  
-			br.readLine();
-			
-			//counter that counts the number of comments replied 
-			
-			int counter = 0; 
-						
-			while ((line = br.readLine()) != null)  
+
+			//InsertionThreadCommentsPerson
+			time2 = System.currentTimeMillis(); 
+			Runnable rs = new InsertionThreadCommentsPerson(1,3000000, dataPath + "/comment_replyOf_comment.csv",0,comments,null);
+			Thread ts = new Thread(rs); 
+			ts.setPriority(Thread.MAX_PRIORITY);
+			ts.start();
+			Runnable rs2 = new InsertionThreadCommentsPerson(3000000,6000000, dataPath + "/comment_replyOf_comment.csv",1,comments,null);
+			Thread ts2 = new Thread(rs2); 
+			ts2.setPriority(Thread.MAX_PRIORITY);
+			ts2.start();
+			Runnable rs3 = new InsertionThreadCommentsPerson(6000000,9000000, dataPath + "/comment_replyOf_comment.csv",2,comments,null);
+			Thread ts3 = new Thread(rs3); 
+			ts3.setPriority(Thread.MAX_PRIORITY);
+			ts3.start();
+			Runnable rs4 = new InsertionThreadCommentsPerson(9000000,99999999, dataPath + "/comment_replyOf_comment.csv",3,comments,null);
+			Thread ts4 = new Thread(rs4); 
+			ts4.setPriority(Thread.MAX_PRIORITY);
+			ts4.start();
+
+			try
 			{
-				StringTokenizer st = new StringTokenizer(line,"|");
-				Integer replyId = Integer.valueOf(st.nextToken());
-				Integer commentId = Integer.valueOf(st.nextToken());
-				int id1=0; 
-				int id2=0;
-				if(replyId>=49999980&&replyId<99999980)
+				while(counter2>0)
 				{
-					id1=1;
+					Thread.currentThread().sleep(300l);				
 				}
-				else if (replyId>=99999980&&replyId<149999980)
-				{
-					id1=2;
-					
-				}
-				else if(replyId>=149999980)
-				{
-					id1=3;
-				}
-				if(commentId>=49999980&&commentId<99999980)
-				{
-					id2=1;
-				}
-				else if (commentId>=99999980&&commentId<149999980)
-				{
-					id2=2;
-					
-				}
-				else if(commentId>=149999980)
-				{
-					id2=3;
-				}
-				Integer commentFrom = commentToPersonS1[id1].get(replyId);//.get(replyId); 
-				Integer commentTo = commentToPersonS1[id2].get(commentId); //commentToPerson.get(commentId); 
-				Comment comment = new Comment(); 
-				comment.setUserIdFrom(commentFrom);
-				comment.setUserIdTo(commentTo);
-				
-				
-				Integer number = commentsConnectedPersons.get(comment);
-				if(number==null || number<=comments)
-				{
-					if(number==null)
-					{
-						number=1; 
-					}
-					else
-					{
-						number++; 
-					}
-					commentsConnectedPersons.put(comment, number);
-				}
+				System.out.println("I am on 2: " + (System.currentTimeMillis()-time2));
 			}
-			
-			
+			catch (Exception ex)
+			{
+				ex.printStackTrace();
+			}
 		}
 		catch(Exception ex)
 		{
-			//do something about it? 
+			//do something about it?
+			ex.printStackTrace();
 		}
 		finally{
 			try
@@ -635,7 +806,7 @@ public class LoaderQuery1 {
 			}
 			catch(Exception ex)
 			{
-				
+				ex.printStackTrace();
 			}
 		}
 	}	
