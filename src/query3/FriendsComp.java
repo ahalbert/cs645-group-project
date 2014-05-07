@@ -24,9 +24,13 @@ public class FriendsComp implements Comparator<Friends>{
 				return 0;
 		}
 		else{
-			if(first.getFirstId() > other.getFirstId())
+			if(first.getP1() > other.getP1())
 				return 1;
-			else if(first.getFirstId() < other.getFirstId())
+			else if(first.getP1() < other.getP1())
+				return -1;
+			else if(first.getP2() > other.getP2())
+				return 1;
+			else if(first.getP2() < other.getP2())
 				return -1;
 			else
 				return 0;
