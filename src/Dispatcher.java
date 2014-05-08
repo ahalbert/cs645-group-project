@@ -1,5 +1,7 @@
 
+import query1.executer.ExecuterQuery1;
 import query2.query2;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -28,10 +30,10 @@ public class Dispatcher {
                     int person1 = new Integer(values[0]);
                     int person2 = new Integer(values[1]);
                     int comments = new Integer(values[2]);
-                    String[] dates = values[1].split("-");
-                    c.set(new Integer(dates[0]), new Integer(dates[1]), new Integer( dates[2] ));
-
-                    q2.eval(k,c, fileloc); 
+                    ExecuterQuery1 executerQuery1 = new ExecuterQuery1(); 
+                    executerQuery1.findPathV2(person1, person2, comments, fileloc
+            				);
+                    //q2.eval(k,c, fileloc); 
                 	
                 }
                 if (type.compareTo("query2") == 0) {
