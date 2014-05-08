@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -12,10 +11,6 @@ import java.util.StringTokenizer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeMap;
-
-import query2.Person;
-import query4.CentralPerson;
-import query4.CentralPersonComp;
 
 
 public class Socializer {
@@ -50,12 +45,20 @@ public class Socializer {
 	TreeMap<String, SocialPerson> oGraph;
 
 	
-	
-	
-	
-	
-	
 	ArrayList<Integer> debugId;
+	
+	/* 
+	 * Initialize without queries and feed them one by one.
+	 */
+	public Socializer(){		
+		queries = new LinkedList<String[]>();
+		allPeople = new ArrayList<Integer>();
+		allConcernedPeople = new HashSet<Integer>();
+	}
+	
+	public void addQuery(String [] q){
+		queries.add(q);
+	}
 	
 	public Socializer(String dataDir, String queryF){		
 		queries = new LinkedList<String[]>();

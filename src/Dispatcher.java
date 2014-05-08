@@ -1,6 +1,8 @@
 
 import query1.executer.ExecuterQuery1;
 import query2.query2;
+import query3.Socializer;
+import query4.MostCentralPeople;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -14,6 +16,8 @@ public class Dispatcher {
         query2 q2 = new query2("",fileloc);
         q2.sortFile(fileloc);
         Calendar c = Calendar.getInstance();
+        Socializer soc = new Socializer();
+        MostCentralPeople mcp = new MostCentralPeople();
         try {
             BufferedReader file = new BufferedReader(new FileReader(queryloc));
             String s;
@@ -49,8 +53,24 @@ public class Dispatcher {
 
                     q2.eval(k,c, fileloc); 
                 }
-                if (type.compareTo("query3") == 0) {}
-                if (type.compareTo("query4") == 0) {}
+                if (type.compareTo("query3") == 0) {
+                	 //Split string into parameters
+                    System.out.println("\n"+s);
+                    int start = s.indexOf('(') + 1;
+                    int end = s.indexOf(')');
+                    s= s.substring(start+1,end);//+1 to get red of starting (
+                    soc.addQuery(s.split(", "));
+                    soc.optimizedApproach();
+                }
+                if (type.compareTo("query4") == 0) {
+               	 //Split string into parameters
+                    System.out.println("\n"+s);
+                    int start = s.indexOf('(') + 1;
+                    int end = s.indexOf(')');
+                    s= s.substring(start+1,end);//+1 to get red of starting (
+                    mcp.addQuery(s.split(", "));
+                    mcp.naiveApproach();
+                }
             }
             file.close();
         } catch(IOException e) {
