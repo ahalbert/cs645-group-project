@@ -17,7 +17,23 @@ public class Dispatcher {
             String s;
             while (( s = file.readLine() ) != null) {
                 String type =  s.substring(0, 6);
-                if (type.compareTo("query1") == 0) {}
+                if (type.compareTo("query1") == 0) {
+                	//query1(p1, p2, x)
+                    //Split string into parameters
+                    System.out.println("\n"+s);
+                    int start = s.indexOf('(');
+                    int end = s.indexOf(')');
+                    s= s.substring(start+1,end);//+1 to get red of starting (
+                    String[] values = s.split(", ");
+                    int person1 = new Integer(values[0]);
+                    int person2 = new Integer(values[1]);
+                    int comments = new Integer(values[2]);
+                    String[] dates = values[1].split("-");
+                    c.set(new Integer(dates[0]), new Integer(dates[1]), new Integer( dates[2] ));
+
+                    q2.eval(k,c, fileloc); 
+                	
+                }
                 if (type.compareTo("query2") == 0) {
                     //Split string into parameters
                     System.out.println("\n"+s);

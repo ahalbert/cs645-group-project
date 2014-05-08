@@ -314,7 +314,7 @@ public class ExecuterQuery1 {
 	}	
 	
 	
-	//first version: breadth first search
+	//first version: breadth first search, calculating some stuff "on the fly" 
 	public void findPathWithIndexBTreeHybrid(Integer userFrom, Integer userTo, Integer comments, 
 			String datapath) throws Exception
 	{ 
