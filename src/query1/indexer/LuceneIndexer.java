@@ -265,7 +265,7 @@ public class LuceneIndexer {
 					String comment1 = st.nextToken(); 
 					String comment2 = st.nextToken();
 					
-					Query query = parser.parse("comment:" + comment1);
+//					Query query = parser.parse("comment:" + comment1);
 					
 //					TopDocs topDocs = s.search(query, 1);
 //

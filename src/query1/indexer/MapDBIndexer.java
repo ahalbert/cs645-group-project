@@ -154,67 +154,6 @@ public class MapDBIndexer {
 		
 		System.out.println("Final indexing time: "
 				+ (System.currentTimeMillis() - time) / 1000 + " sec"); 
-//		//step 1: sort the file person_knows_person by person1: already grouped, so this method doesn't sort so far 
-//		Iterator<Fun.Tuple2<Integer,Integer>> source = sortPersonKnowsPerson(datapath); 
-//		
-//		//step 2: preload max of comment_response_of_comment from a particular person
-//		
-//		String fileOutputPath = datapath + "/sorted_files/final_index.csv";
-//				//"/Users/klimzaporojets/klim/umass/CMPSCI645 Database Design "
-//				//+ "and Implementation/project topics/social_networks/sorted_files/final_index.csv";  
-//
-//		File outputFile = new File(fileOutputPath);
-//		outputFile.delete(); 
-//		
-//		int counter = 0; 
-//		Integer currentPerson=null; 
-//		HashSet <String> commentsRepplied = new HashSet<String>(); 
-//		HashSet <String> commentsPersonB = new HashSet<String>(); 
-//		while(source.hasNext())
-//		{
-//			//++counter; 
-//			if(++counter%10000==0)
-//			{
-//				System.out.println("Read comments for: " + counter + " persons");
-//			}
-//			Fun.Tuple2<Integer, Integer> tuple2 = source.next();
-//			if(currentPerson==null)
-//			{
-//				commentsRepplied = getCommentsRepplied(Integer.valueOf(tuple2.a)); 
-//				currentPerson = tuple2.a; 
-//			}
-//			else
-//			{
-//				if(!currentPerson.equals(tuple2.a))
-//				{
-//					commentsRepplied = getCommentsRepplied(Integer.valueOf(tuple2.a)); 
-//					currentPerson = tuple2.a; 
-//					//System.out.println(counter); 
-//				}
-//			}
-//			commentsPersonB = getCommentsHash(tuple2.b);
-//			
-//			Integer setsIntersected = Sets.intersection(commentsRepplied, commentsPersonB).size();
-//			
-//			if(tuple2.a.equals(858))
-//			{
-//				System.out.println("Here we go again");
-//			}
-//			StringBuilder line = new StringBuilder("");
-//			line.append(tuple2.a);
-//			line.append("|");
-//			line.append(tuple2.b);
-//			line.append("|");
-//			line.append(setsIntersected);
-//			line.append("\n");
-//			writeTextFile(line.toString(), outputFile);
-//		}
-//		
-//		//step 3: 
-//		
-//		System.out.println("Final indexing time: "
-//				+ (System.currentTimeMillis() - time) / 1000 + " sec"); 
-//		buildIndexFinalFile(datapath,datapath+ "/sorted_files/final_index.csv");
 	}	
 	
 	static void buildIndexFinalFile(String pathFile, String sortedFile) throws IOException
