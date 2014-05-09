@@ -13,11 +13,15 @@ public class Dispatcher {
     public static void main (String[] args) {
         String fileloc = args[0];
         String queryloc = args[1];
+<<<<<<< HEAD
+
+=======
         query2 q2 = new query2("",fileloc);
         q2.sortFile(fileloc);
         Calendar c = Calendar.getInstance();
         Socializer soc = new Socializer();
         MostCentralPeople mcp = new MostCentralPeople();
+>>>>>>> b4abc7a7b30090e653212e3ab49e242a9cf0ed8b
         try {
             BufferedReader file = new BufferedReader(new FileReader(queryloc));
             String s;

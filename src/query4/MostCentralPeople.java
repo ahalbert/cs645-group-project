@@ -48,6 +48,17 @@ public class MostCentralPeople {
 		System.out.println(this.queries.size() + " queries4 loaded.");
 	}
 	
+	/*
+	 * For the dispatcher
+	 */
+	public MostCentralPeople(){		
+		queries = new LinkedList<String[]>();
+	}
+	
+	
+	public void addQuery(String [] q){
+		queries.add(q);
+	}
 	
 	/*
 	 * 
