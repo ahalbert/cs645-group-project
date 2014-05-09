@@ -105,7 +105,7 @@ public class ExecuterQuery1 {
 		
 		data = loaderQuery1.loadDataV2(userFrom, userTo, comments, filePath);
 		
-		System.out.println("Time to load the data: " + (System.currentTimeMillis()-time));
+//		System.out.println("Time to load the data: " + (System.currentTimeMillis()-time));
 		
 //		ArrayList<Integer> neighbours = data.get(userFrom);
 		LinkedList<Integer> queue = new LinkedList<Integer>(); 
@@ -154,18 +154,22 @@ public class ExecuterQuery1 {
 		Path parent = null;
 		if(!currentElement.equals(userTo))
 		{
-			System.out.println("Path not found");
+			System.out.println("path none");
 		}
 		else
 		{
-			System.out.println(currentElement);
+			//System.out.println(currentElement);
+			String output; 
+			output = currentElement.toString();  
 			while((parent=distance.get(currentElement)).getParent()!=null)
 			{
-				currentElement=parent.getParent(); 
-				System.out.println(currentElement);
+				currentElement=parent.getParent();
+				output = output + "-" + currentElement.toString();
+//				System.out.println(currentElement);
 			}
+			System.out.println("path " + output); 
 		}
-		System.out.println("The end 2a");
+//		System.out.println("The end 2a");
 		
 	}	
 
@@ -409,7 +413,7 @@ public class ExecuterQuery1 {
 //				"/Users/klimzaporojets/klim/umass/CMPSCI645 Database "
 //				+ "Design and Implementation/project topics/social_networks/data_files");
 
-		System.out.println(System.currentTimeMillis()-time);
-		System.out.println("The end 2");
+//		System.out.println(System.currentTimeMillis()-time);
+//		System.out.println("The end 2");
 	}
 }

@@ -11,9 +11,7 @@ public class Dispatcher {
     public static void main (String[] args) {
         String fileloc = args[0];
         String queryloc = args[1];
-        query2 q2 = new query2("",fileloc);
-        q2.sortFile(fileloc);
-        Calendar c = Calendar.getInstance();
+
         try {
             BufferedReader file = new BufferedReader(new FileReader(queryloc));
             String s;
@@ -31,12 +29,14 @@ public class Dispatcher {
                     int person2 = new Integer(values[1]);
                     int comments = new Integer(values[2]);
                     ExecuterQuery1 executerQuery1 = new ExecuterQuery1(); 
-                    executerQuery1.findPathV2(person1, person2, comments, fileloc
-            				);
+                    executerQuery1.findPathV2(person1, person2, comments, fileloc);
                     //q2.eval(k,c, fileloc); 
                 	
                 }
                 if (type.compareTo("query2") == 0) {
+                    query2 q2 = new query2("",fileloc);
+                    q2.sortFile(fileloc);
+                    Calendar c = Calendar.getInstance();
                     //Split string into parameters
                     System.out.println("\n"+s);
                     int start = s.indexOf('(');
@@ -54,6 +54,7 @@ public class Dispatcher {
             }
             file.close();
         } catch(IOException e) {
+        	e.printStackTrace();
         }
     }
 }

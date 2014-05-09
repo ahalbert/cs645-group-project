@@ -678,7 +678,7 @@ public class LoaderQuery1 {
 			{
 				Thread.currentThread().sleep(10l);				
 			}
-			System.out.println("I am on: " + (System.currentTimeMillis()-time2));
+	//		System.out.println("I am on: " + (System.currentTimeMillis()-time2));
 		}
 		catch (Exception ex)
 		{
@@ -718,7 +718,7 @@ public class LoaderQuery1 {
 				{
 					Thread.currentThread().sleep(10l);				
 				}
-				System.out.println("I am on 2: " + (System.currentTimeMillis()-time2));
+	//			System.out.println("I am on 2: " + (System.currentTimeMillis()-time2));
 			}
 			catch (Exception ex)
 			{
