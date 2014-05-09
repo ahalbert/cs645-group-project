@@ -13,11 +13,6 @@ public class Dispatcher {
     public static void main (String[] args) {
         String fileloc = args[0];
         String queryloc = args[1];
-        query2 q2 = new query2("",fileloc);
-        q2.sortFile(fileloc);
-        Calendar c = Calendar.getInstance();
-        Socializer soc = new Socializer();
-        MostCentralPeople mcp = new MostCentralPeople();
         try {
             BufferedReader file = new BufferedReader(new FileReader(queryloc));
             String s;
@@ -56,6 +51,8 @@ public class Dispatcher {
                     q2.eval(k,c, fileloc); 
                 }
                 if (type.compareTo("query3") == 0) {
+                    Socializer soc = new Socializer();
+                	
                 	 //Split string into parameters
                     System.out.println("\n"+s);
                     int start = s.indexOf('(') + 1;
@@ -65,6 +62,8 @@ public class Dispatcher {
                     soc.optimizedApproach();
                 }
                 if (type.compareTo("query4") == 0) {
+                    MostCentralPeople mcp = new MostCentralPeople();
+                	
                	 //Split string into parameters
                     System.out.println("\n"+s);
                     int start = s.indexOf('(') + 1;
