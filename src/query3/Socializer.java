@@ -24,6 +24,8 @@ public class Socializer {
 	static String placeFile = "place.csv";
 	static String friendshipFile = "person_knows_person.csv";
 	
+	private long lTime, eTime;
+	
 	
 	
 	HashSet<Integer> allConcernedPeople;
@@ -63,6 +65,8 @@ public class Socializer {
 	public Socializer(String dataDir, String queryF){		
 		queries = new LinkedList<String[]>();
 		this.dir = dataDir;
+		lTime = eTime = 0;
+		long sLT = System.currentTimeMillis();
 		try {
             BufferedReader file = new BufferedReader(new FileReader(dataDir + queryF));
             String s;
@@ -74,6 +78,7 @@ public class Socializer {
             }
             file.close();
         } catch (IOException e) { e.printStackTrace(); }
+		lTime += System.currentTimeMillis() - sLT;
 		System.out.println(this.queries.size() + " queries3 loaded.");
 		
 		
@@ -90,20 +95,27 @@ public class Socializer {
 	
 	public void naiveApproach(){
 		System.out.println("Naive approach: (only Hash optimizing)");
-		long startTime = System.currentTimeMillis();
-
+		long sET = System.currentTimeMillis();
+		//long startTime = System.currentTimeMillis();
 		
 		this.peoplePerPlace = new HashMap<String, HashSet<Integer>>();
 		// One for all
 		String[][] q = new String[this.queries.size()][3];
+		eTime += System.currentTimeMillis() - sET;
+		long sLT;
 		for(String[] s : this.queries.toArray(q)){
+			sLT = System.currentTimeMillis();
 			this.peoplePerPlace.put(s[2], this.concernedPeople(s[2]));
+			lTime += System.currentTimeMillis() - sLT;
 			allConcernedPeople.addAll(this.peoplePerPlace.get(s[2]));
 		}
-		
+		sLT = System.currentTimeMillis();
 		nGraph = this.naiveGraph();
+		lTime += System.currentTimeMillis() - sLT;
+		sET = System.currentTimeMillis();
 		int[][] minDist = this.shortestPaths(this.computeInitialMatrix(nGraph));	
-
+		
+		
 		while(this.queries.isEmpty() == false){
 			/*
 			 * 1.Create a graph of concerned people
@@ -140,25 +152,38 @@ public class Socializer {
 
 			System.out.println();
 		}
-		System.out.println("Chrono read: " + (System.currentTimeMillis() - startTime) + "ms");
+		eTime += System.currentTimeMillis() - sET;
+		
+		System.out.println("Loading time: " + this.lTime + "| Execution time: " + this.eTime + "| Total: " + (this.eTime + this.lTime));
+		//System.out.println("Chrono read: " + (System.currentTimeMillis() - startTime) + "ms");
 	}
 	
+	
+	/*
+	 * TO-DO fix search bug!!
+	 */
 	public void optimizedApproach(){
 		System.out.println("Optimized approach: (Introducing Trees)");
-		long startTime = System.currentTimeMillis();
+		long sET = System.currentTimeMillis();
 		
 		
 		this.peoplePerPlace = new HashMap<String, HashSet<Integer>>();
 		// One for all
 		String[][] q = new String[this.queries.size()][3];
+		eTime += System.currentTimeMillis() - sET;
+		long sLT;
 		for(String[] s : this.queries.toArray(q)){
+			sLT = System.currentTimeMillis();
 			this.peoplePerPlace.put(s[2], this.concernedPeople(s[2]));
+			lTime += System.currentTimeMillis() - sLT;
+			sET = System.currentTimeMillis();
 			allConcernedPeople.addAll(this.peoplePerPlace.get(s[2]));
+			eTime += System.currentTimeMillis() - sET;
 		}
-		
+		sLT = System.currentTimeMillis();
 		oGraph =  this.optimizedGraph();
-		int[][] minDist = this.shortestPaths(this.computeInitialMatrix(oGraph));	
-
+		
+		lTime += System.currentTimeMillis() - sLT;
 		while(this.queries.isEmpty() == false){
 			/*
 			 * 1.Create a graph of concerned people
@@ -166,43 +191,49 @@ public class Socializer {
 			 * 3.Enumerate all pairs of people within < h
 			 * 4.For each pair, calculate tags in common and sort. Return k 
 			 */
+			sET = System.currentTimeMillis();
 			String[] currentQ = this.queries.remove();
 			String place = currentQ[2];
 			int k = Integer.valueOf(currentQ[0]);
 			int h = Integer.valueOf(currentQ[1]);
 			TreeMap<String, Friends> concernedPairs = new TreeMap<String, Friends>();
 			
-			for(int i =0; i<minDist.length; i++){
-				for(int j=i+1; j<minDist.length; j++){
-					if(j<minDist.length){
-						if(minDist[i][j] <= h && this.peoplePerPlace.get(place).contains(allPeople.get(i))  && this.peoplePerPlace.get(place).contains(allPeople.get(j))){
-							Friends fs = new Friends(oGraph.get(allPeople.get(i).toString()), oGraph.get(allPeople.get(j).toString()));
+			int N = this.peoplePerPlace.get(place).size();
+			Integer[] a =new Integer[N];
+			a = this.peoplePerPlace.get(place).toArray(a);
+			for(int i =0; i<N; i++){
+				for(int j=i+1; j<N; j++){
+					if(j<N){
+						//System.out.println(oGraph.get("523"));
+						//System.out.println(oGraph.get(a[i].toString()).getId() + " " + oGraph.get(a[j].toString()).getId());
+						Friends fs = new Friends(oGraph.get(a[i].toString()), oGraph.get(a[j].toString()));
+						if(fs.ok)
 							concernedPairs.put(fs.getK(), fs);
-						}
 					}
 				}
 			}
-			String[] keys = new String[k];
-			String res, comments;
-			keys[0] = concernedPairs.firstKey();
-			res = "" + Integer.valueOf(keys[0].substring(4, 10)) + "|" + Integer.valueOf(keys[0].substring(10, 16)) + " ";
-			int shrd = 9999 - Integer.valueOf(keys[0].substring(0, 4));
-			if (shrd == 9999)
-				shrd = 0;
-			comments = "% common interest counts " + shrd + " ";
-			for(int i = 1; i < k; i++){
-				keys[i] = concernedPairs.higherKey(keys[i-1]);
-				res += Integer.valueOf(keys[i].substring(4, 10)) + "|" + Integer.valueOf(keys[i].substring(10, 16)) + " ";
-				shrd = 9999 - Integer.valueOf(keys[i].substring(0, 4));
-				if (shrd == 9999)
-					shrd = 0;
-				comments += shrd + " ";
-				
+			String res = "";
+			String comments = "% common interest counts ";
+			int listed = 0;
+			Friends candidate = null;
+			while(listed < k){
+				if (candidate == null){
+					candidate = concernedPairs.firstEntry().getValue();
+				}
+				else{
+					candidate = concernedPairs.higherEntry(candidate.getK()).getValue();
+				}
+				if (candidate.getDistance() <= h && candidate.getDistance() > 0){
+					res += candidate.getIds() + " ";
+					comments += candidate.getSharedInterests() + " ";
+					listed++;
+				}
 			}
-
 			System.out.println(res + comments);
+
 		}
-		System.out.println("Chrono read: " + (System.currentTimeMillis() - startTime) + "ms");
+		eTime += System.currentTimeMillis() - sET;
+		System.out.println("Loading time: " + this.lTime + "| Execution time: " + this.eTime + "| Total: " + (this.eTime + this.lTime));
 	}	
 	
 	
@@ -344,8 +375,8 @@ public class Socializer {
 					graph.put(pId2, new SocialPerson(pId2));
 					allPeople.add(pId2);
 				}
-				graph.get(pId1).addFriend(pId2);
-				graph.get(pId2).addFriend(pId1);
+				graph.get(pId1).addFriend(graph.get(pId2));
+				graph.get(pId2).addFriend(graph.get(pId1));
             }
             file.close();
         } catch (IOException e) { e.printStackTrace(); }
@@ -381,18 +412,20 @@ public class Socializer {
             file.readLine();
             while (( s = file.readLine() ) != null)  {
             	StringTokenizer st = new StringTokenizer(s,"|");
-				Integer pId1 = Integer.valueOf(st.nextToken());
-				Integer pId2 = Integer.valueOf(st.nextToken());
-				if(!graph.containsKey(pId1.toString())){
-					graph.put(pId1.toString(), new SocialPerson(pId1));
-					allPeople.add(pId1);
+				String pId1 = "" + Integer.valueOf(st.nextToken());
+				String pId2 = "" + Integer.valueOf(st.nextToken());
+				if(!graph.containsKey(pId1)){
+					graph.put(pId1, new SocialPerson(Integer.valueOf(pId1), true));
+					allPeople.add(Integer.valueOf(pId1));
+					//System.out.println("Added " + pId1);
 				}
-				if(!graph.containsKey(pId2.toString())){
-					graph.put(pId2.toString(), new SocialPerson(pId2));
-					allPeople.add(pId2);
+				if(!graph.containsKey(pId2)){
+					graph.put(pId2, new SocialPerson(Integer.valueOf(pId2), true));
+					allPeople.add(Integer.valueOf(pId2));
+					//System.out.println("Added " + pId2);
 				}
-				graph.get(pId1.toString()).addFriend(pId2);
-				graph.get(pId2.toString()).addFriend(pId1);
+				graph.get(pId1).addFriend(graph.get(pId2));
+				graph.get(pId2).addFriend(graph.get(pId1));
             }
             file.close();
         } catch (IOException e) { e.printStackTrace(); }
@@ -455,7 +488,7 @@ public class Socializer {
 		int[][] initialMatrix = new int[n][n];
 		for(int i = 0; i < n; i++){
 			for(int j = i; j < n; j++){
-				if(graph.get(allPeople.get(i)).knows(graph.get(allPeople.get(j)).getId())){
+				if(graph.get(allPeople.get(i)).knows(graph.get(allPeople.get(j)))){
 					initialMatrix[i][j] = 1;
 					initialMatrix[j][i] = 1;
 				}
@@ -471,28 +504,7 @@ public class Socializer {
 		}
 		return initialMatrix;
 	}
-	
-	private int[][] computeInitialMatrix(TreeMap<String, SocialPerson> graph){
-		int n = graph.size();
-		int[][] initialMatrix = new int[n][n];
-		for(int i = 0; i < n; i++){
-			for(int j = i; j < n; j++){
-				if(graph.get(allPeople.get(i).toString()).knows(graph.get(allPeople.get(j).toString()).getId())){
-					initialMatrix[i][j] = 1;
-					initialMatrix[j][i] = 1;
-				}
-				else if(i == j){
-					initialMatrix[i][j] = 0;
-				}
-				else{
-					// This is longer than any shortest path can be
-					initialMatrix[i][j] = 2 * n;
-					initialMatrix[j][i] = 2 * n;
-				}
-			}
-		}
-		return initialMatrix;
-	}
+
 	
 	/*
 	 * Computes the shortest path matrix using the initial adjacency and FloydWarshall
